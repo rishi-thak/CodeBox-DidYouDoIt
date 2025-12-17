@@ -171,10 +171,10 @@ export function MemberManager() {
      };
 
      // Filter Logic
-     const filteredUsers = users.filter(user =>
-          user.full_name.toLowerCase().includes(search.toLowerCase()) ||
-          user.email.toLowerCase().includes(search.toLowerCase())
-     );
+     const filteredUsers = React.useMemo(() => users.filter(user =>
+          (user.full_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+          (user.email?.toLowerCase() || '').includes(search.toLowerCase())
+     ), [users, search]);
 
      const isAllSelected = filteredUsers.length > 0 && selectedUsers.length === filteredUsers.length;
 
