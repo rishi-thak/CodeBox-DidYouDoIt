@@ -32,7 +32,7 @@ export default function Admin() {
                <div className="flex flex-col space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
                     <p className="text-muted-foreground">
-                         Welcome back, {user?.full_name}. Here's what's happening today.
+                         Welcome back, {user?.fullName}. Here's what's happening today.
                     </p>
                </div>
 

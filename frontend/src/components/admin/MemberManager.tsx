@@ -51,7 +51,49 @@ export function MemberManager() {
           groupIds: [] as string[]
      });
 
-     // ... (rest of queries/mutations same)
+     // Queries
+     const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+          queryKey: ['users'],
+          queryFn: api.users.list
+     });
+
+     const { data: groups = [] } = useQuery({
+          queryKey: ['groups'],
+          queryFn: api.groups.list
+     });
+
+     // Mutations
+     const createMutation = useMutation({
+          mutationFn: api.users.create,
+          onSuccess: () => {
+               queryClient.invalidateQueries({ queryKey: ['users'] });
+               setIsDialogOpen(false);
+               resetForm();
+               toast({ title: "Success", description: "Member added successfully." });
+          },
+          onError: () => toast({ title: "Error", description: "Failed to add member", variant: "destructive" })
+     });
+
+     const updateMutation = useMutation({
+          mutationFn: ({ id, data }: { id: string; data: any }) => api.users.update(id, data),
+          onSuccess: () => {
+               queryClient.invalidateQueries({ queryKey: ['users'] });
+               setIsDialogOpen(false);
+               resetForm();
+               toast({ title: "Success", description: "Member updated successfully." });
+          },
+          onError: () => toast({ title: "Error", description: "Failed to update member", variant: "destructive" })
+     });
+
+     const deleteMutation = useMutation({
+          mutationFn: api.users.delete,
+          onSuccess: () => {
+               queryClient.invalidateQueries({ queryKey: ['users'] });
+               setSelectedUsers([]);
+               toast({ title: "Success", description: "Members deleted successfully." });
+          },
+          onError: () => toast({ title: "Error", description: "Failed to delete members", variant: "destructive" })
+     });
 
      const resetForm = () => {
           setFormData({ fullName: '', email: '', role: 'DEVELOPER', groupIds: [] });
@@ -95,29 +137,31 @@ export function MemberManager() {
           }
      };
 
-     // ...
+     const handleDeleteSelected = () => {
+          if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
+               deleteMutation.mutate(selectedUsers);
+          }
+     };
+
+     const toggleSelectAll = (checked: boolean) => {
+          if (checked) {
+               setSelectedUsers(filteredUsers.map(u => u.id));
+          } else {
+               setSelectedUsers([]);
+          }
+     };
+
+     const toggleSelectUser = (userId: string) => {
+          setSelectedUsers(prev =>
+               prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+          );
+     };
 
      // Filter Logic
      const filteredUsers = React.useMemo(() => users.filter(user =>
           (user.fullName?.toLowerCase() || '').includes(search.toLowerCase()) ||
           (user.email?.toLowerCase() || '').includes(search.toLowerCase())
      ), [users, search]);
-
-     return (
-        // ... 
-        // Inside Dialog Content
-            <div className="grid gap-2">
-                 <Label htmlFor="name">Full Name</Label>
-                 <Input
-                      id="name"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                 />
-            </div>
-        // ...
-        // Inside Table Row
-             <TableCell className="font-medium">{user.fullName || 'N/A'}</TableCell>
-     );
 
      const isAllSelected = filteredUsers.length > 0 && selectedUsers.length === filteredUsers.length;
 
@@ -154,8 +198,8 @@ export function MemberManager() {
                                              <Label htmlFor="name">Full Name</Label>
                                              <Input
                                                   id="name"
-                                                  value={formData.full_name}
-                                                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                                  value={formData.fullName}
+                                                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                                              />
                                         </div>
                                         <div className="grid gap-2">
@@ -275,7 +319,7 @@ export function MemberManager() {
                                                                  onCheckedChange={() => toggleSelectUser(user.id)}
                                                             />
                                                        </TableCell>
-                                                       <TableCell className="font-medium">{user.full_name || 'N/A'}</TableCell>
+                                                       <TableCell className="font-medium">{user.fullName || 'N/A'}</TableCell>
                                                        <TableCell>{user.email}</TableCell>
                                                        <TableCell>
                                                             <span className={
