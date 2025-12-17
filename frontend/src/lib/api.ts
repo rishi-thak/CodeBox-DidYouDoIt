@@ -128,8 +128,21 @@ export const api = {
      },
      completions: {
           list: async () => {
-               // Not fully implemented in backend yet
-               return [] as Completion[];
+               const res = await fetch(`${API_URL}/completions`, { headers: getHeaders() });
+               if (!res.ok) {
+                    // If 404, it might just mean the route isn't implemented fully yet, so return empty
+                    if (res.status === 404) return [];
+
+                    const errorText = await res.text();
+                    console.error("Completions Fetch Error:", errorText);
+                    try {
+                         const errorJson = JSON.parse(errorText);
+                         throw new Error(`Failed to fetch completions: ${errorJson.error || res.statusText}`);
+                    } catch (e) {
+                         throw new Error(`Failed to fetch completions: ${res.status} ${res.statusText}`);
+                    }
+               }
+               return await res.json() as Completion[];
           },
           toggle: async (assignmentId: string, userEmail: string) => {
                // Not implemented in backend yet
