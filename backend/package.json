@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "build": "tsc && mkdir -p public"
+    "build": "tsc && mkdir -p public && echo 'API Running' > public/index.html"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
