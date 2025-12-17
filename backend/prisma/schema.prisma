@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  DEVELOPER
+  TECH_LEAD
+  PRODUCT_MANAGER
+  BOARD_ADMIN
+}
+
+enum AssignmentType {
+  VIDEO
+  PDF
+  LINK
+  DOCUMENT
+}
+
+// Models
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  fullName     String?
+  role         Role        @default(DEVELOPER)
+  createdAt    DateTime    @default(now())
+  
+  // Relations
+  groups       UserGroup[]
+  completions  Completion[]
+}
+
+model Group {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime    @default(now())
+
+  // Relations
+  members     UserGroup[]
+  assignments AssignmentGroup[]
+}
+
+model Assignment {
+  id           String          @id @default(uuid())
+  title        String
+  description  String?
+  type         AssignmentType
+  contentUrl   String
+  thumbnailUrl String?
+  dueDate      DateTime?
+  createdAt    DateTime        @default(now())
+
+  // Relations
+  assignedTo   AssignmentGroup[]
+  completions  Completion[]
+}
+
+// Join Tables
+
+model UserGroup {
+  id        String   @id @default(uuid())
+  userId    String
+  groupId   String
+  joinedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+}
+
+model AssignmentGroup {
+  id           String     @id @default(uuid())
+  assignmentId String
+  groupId      String
+  assignedAt   DateTime   @default(now())
+
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  group        Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, groupId])
+}
+
+model Completion {
+  id           String     @id @default(uuid())
+  userId       String
+  assignmentId String
+  completedAt  DateTime   @default(now())
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assignmentId])
+}

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { useAuth } from '../hooks/useAuth';
-import { ArrowLeft, Shield, User } from 'lucide-react';
+import { ArrowLeft, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 export default function SignIn() {
      const { login } = useAuth();
@@ -12,27 +12,39 @@ export default function SignIn() {
      const [email, setEmail] = useState('');
      const [error, setError] = useState('');
 
-     const handleLogin = async (role: 'admin' | 'user') => {
+     const handleLogin = async (role: string) => {
+          console.log("Handle Login clicked with role:", role);
+          console.log("Current email:", email);
           setError('');
 
           if (!email) {
+               console.log("Validation failed: No email");
                setError('Please enter your email address.');
                return;
           }
 
+          // More robust email regex validation
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+               console.log("Validation failed: Invalid format");
+               setError('Please enter a valid email address.');
+               return;
+          }
+
+          // Optional: Keep .edu check if strictly required, but usually basic email check is enough for generic "validity"
           if (!email.toLowerCase().endsWith('.edu')) {
+               console.log("Validation failed: Not .edu");
                setError('Please use a valid .edu email address.');
                return;
           }
 
           try {
-               await login({ email, role });
-               // Navigation is handled by App.tsx redirect based on user state, 
-               // but we can also imperatively push if needed, but App.tsx has <Navigate /> rules.
-               // However, App.tsx redirects might take a render cycle. 
-               // Let's rely on the user state change triggering the redirect in App.tsx
+               console.log("Attempting to call login API...");
+               const result = await login({ email, role });
+               console.log("Login API success", result);
           } catch (err) {
-               setError('Failed to sign in. Please try again.');
+               console.error("Login failed exception", err);
+               setError('Failed to sign in. Please allow up to 30s for the cold start.');
           }
      };
 
@@ -67,26 +79,9 @@ export default function SignIn() {
                          <div className="space-y-3 pt-4">
                               <Button
                                    className="w-full h-12 text-lg gap-2"
-                                   onClick={() => handleLogin('user')}
+                                   onClick={() => handleLogin('DEVELOPER')} // Pass default, backend/route handles redirect
                               >
-                                   <User size={18} /> Student / Developer Access
-                              </Button>
-
-                              <div className="relative">
-                                   <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t border-muted"></span>
-                                   </div>
-                                   <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-card px-2 text-muted-foreground">Or</span>
-                                   </div>
-                              </div>
-
-                              <Button
-                                   variant="outline"
-                                   className="w-full h-12 gap-2"
-                                   onClick={() => handleLogin('admin')}
-                              >
-                                   <Shield size={18} /> Admin Access
+                                   <User size={18} /> Sign In
                               </Button>
                          </div>
                     </div>

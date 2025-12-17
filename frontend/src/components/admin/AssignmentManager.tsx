@@ -27,7 +27,7 @@ export function AssignmentManager({ assignments, groups }: Props) {
      const [formData, setFormData] = useState<Partial<Assignment>>({
           title: '',
           description: '',
-          type: 'video',
+          type: 'VIDEO',
           content_url: '',
           assigned_groups: [],
           due_date: ''
@@ -37,7 +37,7 @@ export function AssignmentManager({ assignments, groups }: Props) {
           setFormData({
                title: '',
                description: '',
-               type: 'video',
+               type: 'VIDEO',
                content_url: '',
                assigned_groups: [],
                due_date: ''
@@ -127,9 +127,10 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                                        <SelectValue placeholder="Select type" />
                                                   </SelectTrigger>
                                                   <SelectContent>
-                                                       <SelectItem value="video">Video</SelectItem>
-                                                       <SelectItem value="pdf">PDF</SelectItem>
-                                                       <SelectItem value="document">Document</SelectItem>
+                                                       <SelectItem value="VIDEO">Video</SelectItem>
+                                                       <SelectItem value="PDF">PDF</SelectItem>
+                                                       <SelectItem value="LINK">Link</SelectItem>
+                                                       <SelectItem value="DOCUMENT">Document</SelectItem>
                                                        <SelectItem value="link">Link</SelectItem>
                                                   </SelectContent>
                                              </Select>
@@ -176,7 +177,7 @@ export function AssignmentManager({ assignments, groups }: Props) {
                               <Card className="flex items-center p-4 justify-between group hover:border-primary/50 transition-colors">
                                    <div className="flex items-center gap-4">
                                         <div className="p-2 bg-secondary rounded-lg text-muted-foreground">
-                                             {assignment.type === 'video' ? <Play size={20} /> : assignment.type === 'pdf' ? <FileText size={20} /> : <LinkIcon size={20} />}
+                                             {assignment.type === 'VIDEO' ? <Play size={20} /> : assignment.type === 'PDF' ? <FileText size={20} /> : <LinkIcon size={20} />}
                                         </div>
                                         <div>
                                              <h3 className="font-semibold">{assignment.title}</h3>

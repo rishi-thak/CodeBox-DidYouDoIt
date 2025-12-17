@@ -15,17 +15,17 @@ interface AssignmentCardProps {
 }
 
 export function AssignmentCard({ assignment, isCompleted, onToggleComplete, index }: AssignmentCardProps) {
-     const typeIcon = {
-          video: Play,
-          pdf: FileText,
-          document: FileText,
-          link: LinkIcon
+     const typeIcons = {
+          VIDEO: Play,
+          PDF: FileText,
+          DOCUMENT: FileText,
+          LINK: LinkIcon,
      }[assignment.type];
 
-     const TypeIcon = typeIcon;
+     const TypeIcon = typeIcons || FileText; // Fallback
 
      const thumbnail = useMemo(() => {
-          if (assignment.type === 'video' && assignment.content_url) {
+          if (assignment.type === 'VIDEO' && assignment.content_url) {
                const regex = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/;
                const match = assignment.content_url.match(regex);
                const videoId = match ? match[1] : null;
@@ -60,7 +60,7 @@ export function AssignmentCard({ assignment, isCompleted, onToggleComplete, inde
                          )}
 
                          <div className="absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-center justify-center">
-                              {assignment.type === 'video' && (
+                              {assignment.type === 'VIDEO' && (
                                    <div className="rounded-full bg-primary/90 p-3 text-primary-foreground shadow-lg transform scale-0 transition-transform duration-300 group-hover:scale-100">
                                         <Play fill="currentColor" className="ml-0.5" />
                                    </div>

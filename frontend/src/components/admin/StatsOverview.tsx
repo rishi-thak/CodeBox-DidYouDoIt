@@ -4,7 +4,7 @@ import { FileText, Users, CheckCircle2, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Props {
-     stats: {
+     stats?: {
           totalAssignments: number;
           totalGroups: number;
           totalCompletions: number;
@@ -12,7 +12,12 @@ interface Props {
      }
 }
 
-export function StatsOverview({ stats }: Props) {
+export function StatsOverview({ stats = {
+     totalAssignments: 0,
+     totalGroups: 0,
+     totalCompletions: 0,
+     activeUsers: 0
+} }: Props) {
      const items = [
           { title: "Total Assignments", value: stats.totalAssignments, icon: FileText, color: "text-blue-500", bg: "bg-blue-500/10" },
           { title: "Active Groups", value: stats.totalGroups, icon: Users, color: "text-purple-500", bg: "bg-purple-500/10" },

@@ -43,7 +43,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                    >
                                         Assignments
                                    </Link>
-                                   {user.role === 'admin' && (
+                                   {/* Define isAdmin here to use in conditional rendering */}
+                                   {user && user.role === 'BOARD_ADMIN' && (
                                         <Link
                                              to="/admin"
                                              className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/admin' ? 'text-primary' : 'text-muted-foreground'}`}
