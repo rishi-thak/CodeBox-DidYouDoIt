@@ -55,7 +55,16 @@ export const api = {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, role })
                });
-               if (!res.ok) throw new Error('Login failed');
+               if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error("Backend Error Response:", errorText);
+                    try {
+                         const errorJson = JSON.parse(errorText);
+                         throw new Error(`Login failed: ${errorJson.details || errorJson.error || res.statusText}`);
+                    } catch (e) {
+                         throw new Error(`Login failed: ${res.status} ${res.statusText} - ${errorText}`);
+                    }
+               }
                const data = await res.json();
                localStorage.setItem('token', data.token);
                return data.user as User;
