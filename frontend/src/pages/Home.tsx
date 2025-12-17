@@ -1,0 +1,109 @@
+import React from 'react';
+import { Button } from '../components/ui/button';
+import { useAuth } from '../hooks/useAuth';
+import { FileText, Play, Link as LinkIcon, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+export default function Home() {
+     useAuth(); // Just to load auth context if needed, though we don't access user here directly
+
+     return (
+          <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4 relative z-10">
+               <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="max-w-3xl mx-auto space-y-8"
+               >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/10 text-primary text-sm font-medium mb-4">
+                         <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                         </span>
+                         New way to track assignments
+                    </div>
+
+                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6">
+                         Track your progress.<br />
+                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-green-300">
+                              Stay on track.
+                         </span>
+                    </h1>
+
+                    <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                         The all-in-one platform for managing learning materials, videos, and assignments.
+                         Simple, fast, and beautiful.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+                         <Button
+                              size="lg"
+                              className="h-14 px-8 text-lg gap-2 shadow-lg shadow-primary/20"
+                              asChild
+                         >
+                              <Link to="/signin">
+                                   Sign In <ArrowRight size={18} />
+                              </Link>
+                         </Button>
+                         <Button
+                              size="lg"
+                              variant="outline"
+                              className="h-14 px-8 text-lg"
+                              asChild
+                         >
+                              <a href="https://codeboxorg.com" target="_blank" rel="noreferrer">
+                                   Learn More
+                              </a>
+                         </Button>
+                    </div>
+
+                    <div className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 text-left">
+                         {[
+                              { icon: Play, title: "Video Lessons", desc: "Track progress on video tutorials automatically." },
+                              { icon: FileText, title: "Documents", desc: "Keep all your PDFs and docs in one place." },
+                              { icon: LinkIcon, title: "Resources", desc: "Curated links for easier access to materials." }
+                         ].map((item, i) => (
+                              <motion.div
+                                   key={i}
+                                   initial={{ opacity: 0, y: 20 }}
+                                   animate={{ opacity: 1, y: 0 }}
+                                   transition={{ delay: 0.2 + (i * 0.1) }}
+                                   className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm"
+                              >
+                                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
+                                        <item.icon size={24} />
+                                   </div>
+                                   <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                                   <p className="text-sm text-muted-foreground">{item.desc}</p>
+                              </motion.div>
+                         ))}
+                    </div>
+               </motion.div>
+
+               {/* Floating decorative elements */}
+               <FloatingIcon icon={Play} className="top-[20%] left-[15%]" delay={0} />
+               <FloatingIcon icon={FileText} className="top-[30%] right-[15%]" delay={2} />
+               <FloatingIcon icon={LinkIcon} className="bottom-[20%] left-[20%]" delay={4} />
+          </div>
+     );
+}
+
+function FloatingIcon({ icon: Icon, className, delay }: { icon: any, className: string, delay: number }) {
+     return (
+          <motion.div
+               animate={{
+                    y: [0, -20, 0],
+                    rotate: [0, 5, -5, 0]
+               }}
+               transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    delay: delay,
+                    ease: "easeInOut"
+               }}
+               className={`absolute hidden lg:flex w-16 h-16 rounded-2xl bg-card border border-border items-center justify-center text-muted-foreground opacity-50 ${className}`}
+          >
+               <Icon size={32} />
+          </motion.div>
+     )
+}
