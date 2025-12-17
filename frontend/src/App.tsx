@@ -12,11 +12,9 @@ import SignIn from './pages/SignIn';
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
 
-  if (isLoading) {
-    return <div className="h-screen w-screen flex items-center justify-center bg-background text-primary">Loading...</div>;
-  }
+
 
   return (
     <Router>

@@ -10,11 +10,12 @@ export function BackgroundOrbs() {
                          scale: [1, 1.2, 1],
                     }}
                     transition={{
-                         duration: 20,
+                         duration: 5,
                          repeat: Infinity,
                          ease: "linear"
                     }}
-                    className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px]"
+                    style={{ willChange: "transform" }}
+                    className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[80px]"
                />
                <motion.div
                     animate={{
@@ -23,11 +24,12 @@ export function BackgroundOrbs() {
                          scale: [1, 1.3, 1],
                     }}
                     transition={{
-                         duration: 25,
+                         duration: 6,
                          repeat: Infinity,
                          ease: "linear"
                     }}
-                    className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]"
+                    style={{ willChange: "transform" }}
+                    className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[80px]"
                />
                <div className="absolute top-[20%] left-[50%] w-[300px] h-[300px] bg-secondary/30 rounded-full blur-[80px]" />
           </div>

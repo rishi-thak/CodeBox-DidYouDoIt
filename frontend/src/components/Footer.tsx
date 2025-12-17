@@ -14,7 +14,7 @@ const Footer = () => {
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col items-center justify-center space-y-4">
                          <p className="text-sm text-gray-500">
-                              Made with ♥️ for Cal Poly students by Cal Poly students
+                              Made with ♥️ for CodeBox, by CodeBox
                          </p>
                          <div className="flex space-x-4">
                               <a

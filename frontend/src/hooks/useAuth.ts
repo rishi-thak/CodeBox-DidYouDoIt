@@ -11,7 +11,7 @@ export function useAuth() {
      });
 
      const loginMutation = useMutation({
-          mutationFn: ({ email, role }: { email: string, role?: 'admin' | 'user' }) => api.auth.login(email, role),
+          mutationFn: ({ email, role }: { email: string, role: 'admin' | 'user' }) => api.auth.login(email, role),
           onSuccess: (newUser) => {
                queryClient.setQueryData(['auth', 'me'], newUser);
           },

@@ -1,9 +1,8 @@
 import React from 'react';
-import { Button } from '../components/ui/button';
+import SlideInButton from '../components/ui/SlideInButton';
 import { useAuth } from '../hooks/useAuth';
-import { FileText, Play, Link as LinkIcon, ArrowRight } from 'lucide-react';
+import { FileText, Play, Link as LinkIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 export default function Home() {
      useAuth(); // Just to load auth context if needed, though we don't access user here directly
 
@@ -12,7 +11,7 @@ export default function Home() {
                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
+                    transition={{ duration: 0.4 }}
                     className="max-w-3xl mx-auto space-y-8"
                >
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/10 text-primary text-sm font-medium mb-4">
@@ -36,25 +35,31 @@ export default function Home() {
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
-                         <Button
-                              size="lg"
-                              className="h-14 px-8 text-lg gap-2 shadow-lg shadow-primary/20"
-                              asChild
-                         >
-                              <Link to="/signin">
-                                   Sign In <ArrowRight size={18} />
-                              </Link>
-                         </Button>
-                         <Button
-                              size="lg"
-                              variant="outline"
-                              className="h-14 px-8 text-lg"
-                              asChild
-                         >
-                              <a href="https://codeboxorg.com" target="_blank" rel="noreferrer">
-                                   Learn More
-                              </a>
-                         </Button>
+                         <SlideInButton
+                              link="/signin"
+                              variant="large"
+                              buttonText="Sign In"
+                              useGradient={true}
+                              gradientFrom="#16a34a"
+                              gradientTo="#15803d"
+                              hoverGradientFrom="#15803d"
+                              defaultTextColor="#ffffff"
+                              hoverTextColor="#ffffff"
+                              iconName="ArrowRight"
+                         />
+                         <SlideInButton
+                              link="https://codeboxorg.com"
+                              variant="large"
+                              buttonText="Learn More"
+                              defaultBackgroundColor="transparent"
+                              hoverBackgroundColor="#ffffff"
+                              defaultTextColor="#ffffff"
+                              hoverTextColor="#000000"
+                              borderColor="#ffffff"
+                              hoverBorderColor="#ffffff"
+                              iconName="ExternalLink"
+                              newTab={true}
+                         />
                     </div>
 
                     <div className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 text-left">
@@ -96,11 +101,12 @@ function FloatingIcon({ icon: Icon, className, delay }: { icon: any, className: 
                     rotate: [0, 5, -5, 0]
                }}
                transition={{
-                    duration: 6,
+                    duration: 2,
                     repeat: Infinity,
                     delay: delay,
                     ease: "easeInOut"
                }}
+               style={{ willChange: "transform" }}
                className={`absolute hidden lg:flex w-16 h-16 rounded-2xl bg-card border border-border items-center justify-center text-muted-foreground opacity-50 ${className}`}
           >
                <Icon size={32} />

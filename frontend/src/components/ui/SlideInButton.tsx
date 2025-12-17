@@ -117,10 +117,8 @@ const SlideInButton: React.FC<SlideInButtonProps> = ({
                clearTimeout(timeoutRef.current);
           }
 
-          // Delay background fill to allow circle animation to be visible
-          timeoutRef.current = setTimeout(() => {
-               setShowBackgroundFill(true);
-          }, 200);
+          // Show background fill instantly
+          setShowBackgroundFill(true);
      };
 
      const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -226,18 +224,18 @@ const SlideInButton: React.FC<SlideInButtonProps> = ({
                     transition={{
                          type: "spring",
                          stiffness: 400,
-                         damping: 25,
+                         damping: 30,
                     }}>
                     <motion.div
-                         initial={{ x: 16 }}
+                         initial={{ x: 10 }}
                          animate={{
-                              x: isHovered ? 0 : 16,
+                              x: isHovered ? 0 : 10,
                          }}
                          transition={{
                               type: "spring",
                               stiffness: 400,
-                              damping: 25,
-                              delay: isHovered ? 0.1 : 0,
+                              damping: 30,
+                              delay: isHovered ? 0.05 : 0,
                          }}>
                          <IconComponent
                               size={currentVariant.iconSize}
