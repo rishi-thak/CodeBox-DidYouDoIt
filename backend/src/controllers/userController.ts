@@ -119,11 +119,11 @@ export const updateUser = async (req: AuthRequest, res: Response): Promise<void>
 
                if (groupIds) {
                     // Delete existing memberships
-                    await tx.membership.deleteMany({ where: { userId: id } });
+                    await tx.userGroup.deleteMany({ where: { userId: id } });
 
                     // Create new memberships
                     if (groupIds.length > 0) {
-                         await tx.membership.createMany({
+                         await tx.userGroup.createMany({
                               data: groupIds.map((gid: string) => ({
                                    userId: id,
                                    groupId: gid
