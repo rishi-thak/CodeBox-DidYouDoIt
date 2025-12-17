@@ -44,7 +44,7 @@ export default function SignIn() {
                console.log("Login API success", result);
           } catch (err) {
                console.error("Login failed exception", err);
-               setError('Failed to sign in. Please allow up to 30s for the cold start.');
+               setError('Failed to sign in. Please try again soon.');
           }
      };
 
