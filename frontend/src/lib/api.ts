@@ -56,13 +56,15 @@ export const api = {
                     body: JSON.stringify({ email, role })
                });
                if (!res.ok) {
-                    const errorText = await res.text();
-                    console.error("Backend Error Response:", errorText);
-                    try {
-                         const errorJson = JSON.parse(errorText);
-                         throw new Error(`Login failed: ${errorJson.details || errorJson.error || res.statusText}`);
-                    } catch (e) {
-                         throw new Error(`Login failed: ${res.status} ${res.statusText} - ${errorText}`);
+                    if (!res.ok) {
+                         const errorText = await res.text();
+                         console.error("Assignments Fetch Error:", errorText);
+                         try {
+                              const errorJson = JSON.parse(errorText);
+                              throw new Error(`Failed to fetch assignments: ${errorJson.error || res.statusText}`);
+                         } catch (e) {
+                              throw new Error(`Failed to fetch assignments: ${res.status} ${res.statusText}`);
+                         }
                     }
                }
                const data = await res.json();
