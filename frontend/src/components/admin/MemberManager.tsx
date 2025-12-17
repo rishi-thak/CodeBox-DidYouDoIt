@@ -149,7 +149,7 @@ export function MemberManager() {
      };
 
      const handleDeleteSelected = () => {
-          if (confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
+          if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
                deleteMutation.mutate(selectedUsers);
           }
      };
