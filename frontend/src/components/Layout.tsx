@@ -57,7 +57,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               <div className="flex items-center gap-4">
                                    <div className="hidden md:flex items-center gap-2 text-sm text-right">
                                         <div className="flex flex-col">
-                                             <span className="font-medium leading-none">{user.full_name}</span>
+                                             <span className="font-medium leading-none">{user.fullName}</span>
                                              <span className="text-xs text-muted-foreground capitalize">{user.role}</span>
                                         </div>
                                         <div className="h-8 w-8 bg-secondary rounded-full flex items-center justify-center">

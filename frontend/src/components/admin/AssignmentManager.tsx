@@ -28,9 +28,9 @@ export function AssignmentManager({ assignments, groups }: Props) {
           title: '',
           description: '',
           type: 'VIDEO',
-          content_url: '',
-          assigned_groups: [],
-          due_date: ''
+          contentUrl: '',
+          groupIds: [],
+          dueDate: ''
      });
 
      const resetForm = () => {
@@ -38,9 +38,9 @@ export function AssignmentManager({ assignments, groups }: Props) {
                title: '',
                description: '',
                type: 'VIDEO',
-               content_url: '',
-               assigned_groups: [],
-               due_date: ''
+               contentUrl: '',
+               groupIds: [],
+               dueDate: ''
           });
           setEditingId(null);
      };
@@ -75,7 +75,7 @@ export function AssignmentManager({ assignments, groups }: Props) {
      });
 
      const handleSubmit = () => {
-          if (!formData.title || !formData.content_url) return; // Basic validation
+          if (!formData.title || !formData.contentUrl) return; // Basic validation
 
           if (editingId) {
                updateMutation.mutate({ id: editingId, data: formData });
@@ -86,11 +86,11 @@ export function AssignmentManager({ assignments, groups }: Props) {
 
      const toggleGroupSelection = (groupId: string) => {
           setFormData(prev => {
-               const current = prev.assigned_groups || [];
+               const current = prev.groupIds || [];
                if (current.includes(groupId)) {
-                    return { ...prev, assigned_groups: current.filter(id => id !== groupId) };
+                    return { ...prev, groupIds: current.filter(id => id !== groupId) };
                } else {
-                    return { ...prev, assigned_groups: [...current, groupId] };
+                    return { ...prev, groupIds: [...current, groupId] };
                }
           });
      };
@@ -137,13 +137,13 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                         </div>
                                         <div className="grid gap-2">
                                              <Label htmlFor="date">Due Date (Optional)</Label>
-                                             <Input type="date" id="date" value={formData.due_date ? new Date(formData.due_date!).toISOString().split('T')[0] : ''} onChange={e => setFormData({ ...formData, due_date: e.target.value })} />
+                                             <Input type="date" id="date" value={formData.dueDate ? new Date(formData.dueDate!).toISOString().split('T')[0] : ''} onChange={e => setFormData({ ...formData, dueDate: e.target.value })} />
                                         </div>
                                    </div>
 
                                    <div className="grid gap-2">
                                         <Label htmlFor="url">Content URL</Label>
-                                        <Input id="url" value={formData.content_url} onChange={e => setFormData({ ...formData, content_url: e.target.value })} placeholder="https://..." />
+                                        <Input id="url" value={formData.contentUrl} onChange={e => setFormData({ ...formData, contentUrl: e.target.value })} placeholder="https://..." />
                                    </div>
 
                                    <div className="grid gap-2">
@@ -153,7 +153,7 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                                   <div key={group.id} className="flex items-center space-x-2">
                                                        <Checkbox
                                                             id={`grp-${group.id}`}
-                                                            checked={(formData.assigned_groups || []).includes(group.id)}
+                                                            checked={(formData.groupIds || []).includes(group.id)}
                                                             onCheckedChange={() => toggleGroupSelection(group.id)}
                                                        />
                                                        <Label htmlFor={`grp-${group.id}`} className="font-normal cursor-pointer">{group.name}</Label>
@@ -183,26 +183,26 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                              <h3 className="font-semibold">{assignment.title}</h3>
                                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                   <span className="capitalize">{assignment.type}</span>
-                                                  {assignment.due_date && (
+                                                  {assignment.dueDate && (
                                                        <>
                                                             <span>•</span>
-                                                            <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(assignment.due_date).toLocaleDateString()}</span>
+                                                            <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(assignment.dueDate).toLocaleDateString()}</span>
                                                        </>
                                                   )}
                                              </div>
                                              <div className="flex gap-1 mt-1">
-                                                  {assignment.assigned_groups?.map(gid => {
+                                                  {assignment.groupIds?.map(gid => {
                                                        const g = groups.find(x => x.id === gid);
                                                        return g ? <Badge key={gid} variant="outline" className="text-[10px] py-0 h-4">{g.name}</Badge> : null;
                                                   })}
-                                                  {(!assignment.assigned_groups || assignment.assigned_groups.length === 0) && <Badge variant="secondary" className="text-[10px] py-0 h-4">Everyone</Badge>}
+                                                  {(!assignment.groupIds || assignment.groupIds.length === 0) && <Badge variant="secondary" className="text-[10px] py-0 h-4">Everyone</Badge>}
                                              </div>
                                         </div>
                                    </div>
 
                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button variant="ghost" size="icon" asChild>
-                                             <a href={assignment.content_url} target="_blank" rel="noreferrer"><ExternalLink size={16} /></a>
+                                             <a href={assignment.contentUrl} target="_blank" rel="noreferrer"><ExternalLink size={16} /></a>
                                         </Button>
                                         <Button variant="ghost" size="icon" onClick={() => handleEdit(assignment)}>
                                              <Pencil size={16} className="text-blue-500" />

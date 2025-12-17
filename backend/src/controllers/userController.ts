@@ -71,6 +71,10 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
           res.json(newUser);
      } catch (error: any) {
           console.error("Create User Error:", error);
+          if (error.code === 'P2002') { // Prisma unique constraint error
+               res.status(400).json({ error: 'User with this email already exists' });
+               return;
+          }
           res.status(500).json({ error: 'Failed to create user', details: error.message });
      }
 };
@@ -163,13 +167,21 @@ export const deleteUsers = async (req: AuthRequest, res: Response): Promise<void
                return;
           }
 
-          await prisma.user.deleteMany({
+          // Prevent self-deletion
+          const validIds = ids.filter(id => id !== req.user!.id);
+
+          if (validIds.length === 0) {
+               res.json({ success: false, message: "Cannot delete yourself" });
+               return;
+          }
+
+          const result = await prisma.user.deleteMany({
                where: {
-                    id: { in: ids }
+                    id: { in: validIds }
                }
           });
 
-          res.json({ success: true, count: ids.length });
+          res.json({ success: true, count: result.count });
      } catch (error: any) {
           console.error("Delete Users Error:", error);
           res.status(500).json({ error: 'Failed to delete users', details: error.message });

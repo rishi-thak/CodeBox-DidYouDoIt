@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { api, User, Group } from '../../lib/api';
+import React, { useState } from 'react';
+import { api, User } from '../../lib/api';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -89,6 +89,7 @@ export function MemberManager() {
           mutationFn: api.users.delete,
           onSuccess: () => {
                queryClient.invalidateQueries({ queryKey: ['users'] });
+               queryClient.invalidateQueries({ queryKey: ['groups'] });
                setSelectedUsers([]);
                toast({ title: "Success", description: "Members deleted successfully." });
           },
@@ -117,8 +118,10 @@ export function MemberManager() {
      };
 
      const handleSave = () => {
+          console.log("Handle Save Triggered", formData);
           // Validation
           if (!formData.email || !formData.fullName) {
+               console.log("Validation Failed");
                toast({ title: "Validation Error", description: "Name and Email are required", variant: "destructive" });
                return;
           }
@@ -138,6 +141,7 @@ export function MemberManager() {
      };
 
      const handleDeleteSelected = () => {
+          console.log("Deleting users:", selectedUsers);
           if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
                deleteMutation.mutate(selectedUsers);
           }
@@ -251,7 +255,7 @@ export function MemberManager() {
                                         </div>
                                    </div>
                                    <DialogFooter>
-                                        <Button type="submit" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+                                        <Button onClick={() => handleSave()} disabled={createMutation.isPending || updateMutation.isPending}>
                                              {createMutation.isPending || updateMutation.isPending ? (
                                                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                              ) : null}

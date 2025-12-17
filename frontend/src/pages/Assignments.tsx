@@ -54,9 +54,9 @@ export default function Assignments() {
 
           // Assignment Logic
           const isAssigned =
-               !assignment.assigned_groups ||
-               assignment.assigned_groups.length === 0 ||
-               assignment.assigned_groups.some(gid => userGroupIds.includes(gid));
+               !assignment.groupIds ||
+               assignment.groupIds.length === 0 ||
+               assignment.groupIds.some(gid => userGroupIds.includes(gid));
 
           if (!isAssigned) return false;
 
@@ -72,7 +72,7 @@ export default function Assignments() {
           if (typeFilter !== 'all' && assignment.type !== typeFilter) return false;
 
           // 4. Status Filter
-          const isCompleted = completions.some(c => c.assignment_id === assignment.id && c.user_email === user.email);
+          const isCompleted = completions.some(c => c.assignmentId === assignment.id && c.userEmail === user.email);
           if (statusFilter === 'done' && !isCompleted) return false;
           if (statusFilter === 'pending' && isCompleted) return false;
 
@@ -86,11 +86,11 @@ export default function Assignments() {
      const baseAssignments = assignments.filter(assignment => {
           if (!user) return false;
           const userGroupIds = groups.filter(g => g.members.includes(user.email)).map(g => g.id);
-          return !assignment.assigned_groups || assignment.assigned_groups.length === 0 || assignment.assigned_groups.some(gid => userGroupIds.includes(gid));
+          return !assignment.groupIds || assignment.groupIds.length === 0 || assignment.groupIds.some(gid => userGroupIds.includes(gid));
      });
 
      const completedCount = baseAssignments.filter(a =>
-          completions.some(c => c.assignment_id === a.id && c.user_email === user?.email)
+          completions.some(c => c.assignmentId === a.id && c.userEmail === user?.email)
      ).length;
 
      const totalCount = baseAssignments.length;
@@ -177,7 +177,7 @@ export default function Assignments() {
                )}>
                     <AnimatePresence>
                          {visibleAssignments.map((assignment, index) => {
-                              const isCompleted = completions.some(c => c.assignment_id === assignment.id && c.user_email === user?.email);
+                              const isCompleted = completions.some(c => c.assignmentId === assignment.id && c.userEmail === user?.email);
                               return (
                                    <AssignmentCard
                                         key={assignment.id}

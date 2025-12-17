@@ -25,16 +25,16 @@ export function AssignmentCard({ assignment, isCompleted, onToggleComplete, inde
      const TypeIcon = typeIcons || FileText; // Fallback
 
      const thumbnail = useMemo(() => {
-          if (assignment.type === 'VIDEO' && assignment.content_url) {
+          if (assignment.type === 'VIDEO' && assignment.contentUrl) {
                const regex = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/;
-               const match = assignment.content_url.match(regex);
+               const match = assignment.contentUrl.match(regex);
                const videoId = match ? match[1] : null;
                if (videoId) {
                     return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
                }
           }
-          return assignment.thumbnail_url;
-     }, [assignment.content_url, assignment.type, assignment.thumbnail_url]);
+          return assignment.thumbnailUrl;
+     }, [assignment.contentUrl, assignment.type, assignment.thumbnailUrl]);
 
      return (
           <motion.div
@@ -66,7 +66,7 @@ export function AssignmentCard({ assignment, isCompleted, onToggleComplete, inde
                                    </div>
                               )}
                               <a
-                                   href={assignment.content_url}
+                                   href={assignment.contentUrl}
                                    target="_blank"
                                    rel="noreferrer"
                                    className="absolute inset-0"
@@ -105,17 +105,17 @@ export function AssignmentCard({ assignment, isCompleted, onToggleComplete, inde
                          </div>
 
                          <div className="flex items-center justify-between mt-4">
-                              {assignment.due_date && (
+                              {assignment.dueDate && (
                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                         <Calendar size={14} />
-                                        <span>Due {new Date(assignment.due_date).toLocaleDateString()}</span>
+                                        <span>Due {new Date(assignment.dueDate).toLocaleDateString()}</span>
                                    </div>
                               )}
 
-                              {!assignment.due_date && <div />} {/* Spacer */}
+                              {!assignment.dueDate && <div />} {/* Spacer */}
 
                               <Button size="sm" variant="outline" className="h-8 gap-1.5" asChild>
-                                   <a href={assignment.content_url} target="_blank" rel="noreferrer">
+                                   <a href={assignment.contentUrl} target="_blank" rel="noreferrer">
                                         Open <ExternalLink size={12} />
                                    </a>
                               </Button>

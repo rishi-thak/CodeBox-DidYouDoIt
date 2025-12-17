@@ -6,15 +6,15 @@ export interface User {
      email: string;
      fullName: string;
      role: 'DEVELOPER' | 'TECH_LEAD' | 'PRODUCT_MANAGER' | 'BOARD_ADMIN'; // Updated roles
-     created_date: string;
+     createdAt: string;
 }
 
 export interface Group {
      id: string;
      name: string;
      description: string;
-     created_date: string;
-     members: string[];
+     createdAt: string;
+     members: string[]; // emails
      _count?: { members: number };
 }
 
@@ -23,18 +23,19 @@ export interface Assignment {
      title: string;
      description: string;
      type: 'VIDEO' | 'PDF' | 'LINK' | 'DOCUMENT';
-     content_url: string;
-     thumbnail_url?: string;
-     assigned_groups?: string[]; // TODO: Backend returns `assignedTo` relation, need to map if needed
-     due_date?: string;
-     created_date: string;
+     contentUrl: string;
+     thumbnailUrl?: string;
+     groupIds?: string[];
+     assignedTo?: { groupId: string }[]; // Backend relation structure
+     dueDate?: string;
+     createdAt: string;
 }
 
 export interface Completion {
      id: string;
-     assignment_id: string;
-     user_email: string;
-     completed_at: string;
+     assignmentId: string;
+     userEmail: string;
+     completedAt: string;
 }
 
 // Helper
@@ -89,7 +90,12 @@ export const api = {
           list: async () => {
                const res = await fetch(`${API_URL}/assignments`, { headers: getHeaders() });
                if (!res.ok) throw new Error('Failed to fetch assignments');
-               return await res.json() as Assignment[];
+               const data = await res.json();
+               // Map backend structure to frontend interface
+               return data.map((item: any) => ({
+                    ...item,
+                    groupIds: item.assignedTo?.map((rel: any) => rel.groupId) || []
+               })) as Assignment[];
           },
           create: async (data: any) => {
                const res = await fetch(`${API_URL}/assignments`, {
@@ -174,8 +180,8 @@ export const api = {
                return await res.json();
           },
           delete: async (ids: string[]) => {
-               const res = await fetch(`${API_URL}/users`, {
-                    method: 'DELETE',
+               const res = await fetch(`${API_URL}/users/delete-many`, {
+                    method: 'POST',
                     headers: getHeaders(),
                     body: JSON.stringify({ ids })
                });
