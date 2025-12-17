@@ -23,7 +23,7 @@ function AppRoutes() {
           <Route path="/" element={user ? (user.role === 'BOARD_ADMIN' ? <Navigate to="/admin" replace /> : <Navigate to="/assignments" replace />) : <Home />} />
           <Route path="/signin" element={user ? (user.role === 'BOARD_ADMIN' ? <Navigate to="/admin" replace /> : <Navigate to="/assignments" replace />) : <SignIn />} />
           <Route path="/assignments" element={user ? <Assignments /> : <Navigate to="/" replace />} />
-          <Route path="/admin" element={user?.role === 'BOARD_ADMIN' ? <Admin /> : <Navigate to="/assignments" replace />} />
+          <Route path="/admin" element={['BOARD_ADMIN', 'TECH_LEAD', 'PRODUCT_MANAGER'].includes(user?.role || '') ? <Admin /> : <Navigate to="/assignments" replace />} />
         </Routes>
       </Layout>
     </Router>

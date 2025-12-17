@@ -41,18 +41,26 @@ export default function Admin() {
                <Tabs defaultValue="assignments" className="space-y-4">
                     <TabsList>
                          <TabsTrigger value="assignments">Assignments</TabsTrigger>
-                         <TabsTrigger value="groups">Groups</TabsTrigger>
-                         <TabsTrigger value="members">Members</TabsTrigger>
+                         {user?.role === 'BOARD_ADMIN' && (
+                              <>
+                                   <TabsTrigger value="groups">Groups</TabsTrigger>
+                                   <TabsTrigger value="members">Members</TabsTrigger>
+                              </>
+                         )}
                     </TabsList>
                     <TabsContent value="assignments" className="space-y-4">
                          <AssignmentManager assignments={assignments} groups={groups} />
                     </TabsContent>
-                    <TabsContent value="groups" className="space-y-4">
-                         <GroupManager groups={groups} />
-                    </TabsContent>
-                    <TabsContent value="members" className="space-y-4">
-                         <MemberManager />
-                    </TabsContent>
+                    {user?.role === 'BOARD_ADMIN' && (
+                         <>
+                              <TabsContent value="groups" className="space-y-4">
+                                   <GroupManager groups={groups} />
+                              </TabsContent>
+                              <TabsContent value="members" className="space-y-4">
+                                   <MemberManager />
+                              </TabsContent>
+                         </>
+                    )}
                </Tabs>
           </motion.div>
      );

@@ -63,3 +63,68 @@ export const createGroup = async (req: AuthRequest, res: Response): Promise<void
           res.status(500).json({ error: 'Failed to create group' });
      }
 };
+
+export const updateGroup = async (req: AuthRequest, res: Response): Promise<void> => {
+     try {
+          if (req.user?.role !== 'BOARD_ADMIN') {
+               res.status(403).json({ error: 'Only admins can update groups' });
+               return;
+          }
+
+          const { id } = req.params;
+          const { name, description, members } = req.body; // members is list of emails
+
+          // Handle members update if provided
+          if (members) {
+               // Find users by email
+               const users = await prisma.user.findMany({
+                    where: { email: { in: members } }
+               });
+
+               // Transactional update
+               await prisma.$transaction(async (tx) => {
+                    await tx.group.update({
+                         where: { id },
+                         data: { name, description }
+                    });
+
+                    // Sync members: Delete all existing, add new list
+                    // This is "Nuclear" approach but simple for MVP list editing
+                    await tx.userGroup.deleteMany({ where: { groupId: id } });
+
+                    if (users.length > 0) {
+                         await tx.userGroup.createMany({
+                              data: users.map(u => ({
+                                   userId: u.id,
+                                   groupId: id
+                              }))
+                         });
+                    }
+               });
+          } else {
+               await prisma.group.update({
+                    where: { id },
+                    data: { name, description }
+               });
+          }
+
+          res.json({ success: true });
+     } catch (error) {
+          console.error(error);
+          res.status(500).json({ error: 'Failed to update group' });
+     }
+};
+
+export const deleteGroup = async (req: AuthRequest, res: Response): Promise<void> => {
+     try {
+          if (req.user?.role !== 'BOARD_ADMIN') {
+               res.status(403).json({ error: 'Only admins can delete groups' });
+               return;
+          }
+          const { id } = req.params;
+          await prisma.group.delete({ where: { id } });
+          res.json({ success: true });
+     } catch (error) {
+          res.status(500).json({ error: 'Failed to delete group' });
+     }
+};
