@@ -107,11 +107,21 @@ export const api = {
                return await res.json();
           },
           update: async (id: string, data: any) => {
-               // Not implemented in backend yet fully
-               return {} as Assignment;
+               const res = await fetch(`${API_URL}/assignments/${id}`, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+               });
+               if (!res.ok) throw new Error('Failed to update assignment');
+               return await res.json() as Assignment;
           },
           delete: async (id: string) => {
-               // Not implemented in backend yet
+               const res = await fetch(`${API_URL}/assignments/${id}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+               });
+               if (!res.ok) throw new Error('Failed to delete assignment');
+               return await res.json();
           }
      },
      groups: {
@@ -129,8 +139,23 @@ export const api = {
                if (!res.ok) throw new Error('Failed to create group');
                return await res.json();
           },
-          update: async (id: string, data: any) => { return {} as Group },
-          delete: async (id: string) => { }
+          update: async (id: string, data: any) => {
+               const res = await fetch(`${API_URL}/groups/${id}`, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+               });
+               if (!res.ok) throw new Error('Failed to update group');
+               return await res.json() as Group;
+          },
+          delete: async (id: string) => {
+               const res = await fetch(`${API_URL}/groups/${id}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+               });
+               if (!res.ok) throw new Error('Failed to delete group');
+               return await res.json();
+          }
      },
      completions: {
           list: async () => {

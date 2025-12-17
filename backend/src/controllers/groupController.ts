@@ -53,13 +53,32 @@ export const createGroup = async (req: AuthRequest, res: Response): Promise<void
                return;
           }
 
-          const { name, description } = req.body;
+          const { name, description, members } = req.body; // members is list of emails optional
+
+          let userIds: string[] = [];
+          if (members && members.length > 0) {
+               const users = await prisma.user.findMany({
+                    where: { email: { in: members } },
+                    select: { id: true }
+               });
+               userIds = users.map(u => u.id);
+          }
+
           const group = await prisma.group.create({
-               data: { name, description }
+               data: {
+                    name,
+                    description,
+                    members: {
+                         create: userIds.map(uid => ({
+                              user: { connect: { id: uid } }
+                         }))
+                    }
+               }
           });
 
           res.json(group);
      } catch (error) {
+          console.error(error);
           res.status(500).json({ error: 'Failed to create group' });
      }
 };
