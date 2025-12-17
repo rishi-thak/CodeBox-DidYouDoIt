@@ -154,6 +154,33 @@ export const api = {
                const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
                if (!res.ok) throw new Error('Failed to fetch users');
                return await res.json() as User[];
+          },
+          create: async (data: any) => {
+               const res = await fetch(`${API_URL}/users`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+               });
+               if (!res.ok) throw new Error('Failed to create user');
+               return await res.json();
+          },
+          update: async (id: string, data: any) => {
+               const res = await fetch(`${API_URL}/users/${id}`, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+               });
+               if (!res.ok) throw new Error('Failed to update user');
+               return await res.json();
+          },
+          delete: async (ids: string[]) => {
+               const res = await fetch(`${API_URL}/users`, {
+                    method: 'DELETE',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ ids })
+               });
+               if (!res.ok) throw new Error('Failed to delete users');
+               return await res.json();
           }
      }
 };
