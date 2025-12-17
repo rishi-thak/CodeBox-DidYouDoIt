@@ -4,7 +4,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 export interface User {
      id: string;
      email: string;
-     full_name: string;
+     fullName: string;
      role: 'DEVELOPER' | 'TECH_LEAD' | 'PRODUCT_MANAGER' | 'BOARD_ADMIN'; // Updated roles
      created_date: string;
 }

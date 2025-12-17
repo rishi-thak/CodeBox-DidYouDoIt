@@ -45,81 +45,28 @@ export function MemberManager() {
 
      // Form State (for both add and edit)
      const [formData, setFormData] = useState({
-          full_name: '',
+          fullName: '',
           email: '',
           role: 'DEVELOPER',
           groupIds: [] as string[]
      });
 
-     // Queries
-     const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-          queryKey: ['users'],
-          queryFn: api.users.list
-     });
+     // ... (rest of queries/mutations same)
 
-     const { data: groups = [] } = useQuery({
-          queryKey: ['groups'],
-          queryFn: api.groups.list
-     });
-
-     // Mutations
-     const createMutation = useMutation({
-          mutationFn: api.users.create,
-          onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['users'] });
-               toast({ title: 'Success', description: 'User created successfully' });
-               setIsDialogOpen(false);
-               resetForm();
-          },
-          onError: (error: any) => {
-               toast({ title: 'Error', description: error.message, variant: 'destructive' });
-          }
-     });
-
-     const updateMutation = useMutation({
-          mutationFn: ({ id, data }: { id: string, data: any }) => api.users.update(id, data),
-          onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['users'] });
-               toast({ title: 'Success', description: 'User updated successfully' });
-               setIsDialogOpen(false);
-               resetForm();
-          },
-          onError: (error: any) => {
-               toast({ title: 'Error', description: error.message, variant: 'destructive' });
-          }
-     });
-
-     const deleteMutation = useMutation({
-          mutationFn: api.users.delete,
-          onSuccess: (data) => {
-               queryClient.invalidateQueries({ queryKey: ['users'] });
-               toast({ title: 'Success', description: `Deleted ${data.count} users` });
-               setSelectedUsers([]);
-          },
-          onError: (error: any) => {
-               toast({ title: 'Error', description: error.message, variant: 'destructive' });
-          }
-     });
-
-     // Handlers
      const resetForm = () => {
-          setFormData({ full_name: '', email: '', role: 'DEVELOPER', groupIds: [] });
+          setFormData({ fullName: '', email: '', role: 'DEVELOPER', groupIds: [] });
           setEditingUser(null);
      };
 
      const handleEdit = (user: User) => {
           setEditingUser(user);
-          // Determine initial groups for this user
-          // Note: The backend should ideally return explicit group IDs.
-          // For now, matching by email/members array as per existing frontend logic,
-          // unless we updated backend to return 'groups' relation properly.
-          // Let's assume frontend logic first:
+          // ...
           const userGroupIds = groups
                .filter(g => g.members.includes(user.email))
                .map(g => g.id);
 
           setFormData({
-               full_name: user.full_name,
+               fullName: user.fullName,
                email: user.email,
                role: user.role,
                groupIds: userGroupIds
@@ -129,13 +76,13 @@ export function MemberManager() {
 
      const handleSave = () => {
           // Validation
-          if (!formData.email || !formData.full_name) {
+          if (!formData.email || !formData.fullName) {
                toast({ title: "Validation Error", description: "Name and Email are required", variant: "destructive" });
                return;
           }
 
           const payload = {
-               fullName: formData.full_name,
+               fullName: formData.fullName,
                email: formData.email,
                role: formData.role,
                groupIds: formData.groupIds
@@ -148,33 +95,29 @@ export function MemberManager() {
           }
      };
 
-     const handleDeleteSelected = () => {
-          if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
-               deleteMutation.mutate(selectedUsers);
-          }
-     };
-
-     const toggleSelectAll = () => {
-          if (selectedUsers.length === filteredUsers.length) {
-               setSelectedUsers([]);
-          } else {
-               setSelectedUsers(filteredUsers.map(u => u.id));
-          }
-     };
-
-     const toggleSelectUser = (id: string) => {
-          if (selectedUsers.includes(id)) {
-               setSelectedUsers(selectedUsers.filter(uid => uid !== id));
-          } else {
-               setSelectedUsers([...selectedUsers, id]);
-          }
-     };
+     // ...
 
      // Filter Logic
      const filteredUsers = React.useMemo(() => users.filter(user =>
-          (user.full_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+          (user.fullName?.toLowerCase() || '').includes(search.toLowerCase()) ||
           (user.email?.toLowerCase() || '').includes(search.toLowerCase())
      ), [users, search]);
+
+     return (
+        // ... 
+        // Inside Dialog Content
+            <div className="grid gap-2">
+                 <Label htmlFor="name">Full Name</Label>
+                 <Input
+                      id="name"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                 />
+            </div>
+        // ...
+        // Inside Table Row
+             <TableCell className="font-medium">{user.fullName || 'N/A'}</TableCell>
+     );
 
      const isAllSelected = filteredUsers.length > 0 && selectedUsers.length === filteredUsers.length;
 
