@@ -17,17 +17,24 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
      }
 
      try {
-          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { id: string };
+          const secret = process.env.JWT_SECRET || 'secret';
+          // console.log('Verifying token with secret:', secret.substring(0, 5) + '...');
+
+          const decoded = jwt.verify(token, secret) as { id: string };
+          // console.log('Token decoded:', decoded);
+
           const user = await prisma.user.findUnique({ where: { id: decoded.id } });
 
           if (!user) {
-               throw new Error();
+               console.error('User not found for token ID:', decoded.id);
+               throw new Error('User not found');
           }
 
           req.user = user;
           next();
-     } catch (error) {
-          res.status(401).send({ error: 'Please authenticate.' });
+     } catch (error: any) {
+          console.error('Authentication Error:', error.message);
+          res.status(401).send({ error: 'Please authenticate.', details: error.message });
      }
 };
 
