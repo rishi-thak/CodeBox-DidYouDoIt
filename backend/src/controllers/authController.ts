@@ -17,14 +17,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           let user = await prisma.user.findUnique({ where: { email } });
 
           if (!user) {
-               // Create new user - Default to DEVELOPER if no role specified
-               user = await prisma.user.create({
-                    data: {
-                         email,
-                         role: (role as Role) || Role.DEVELOPER,
-                         fullName: email.split('@')[0]
-                    }
-               });
+               res.status(401).json({ error: "It doesn't look like you're in our system" });
+               return;
           }
           // If user exists, we just log them in with their EXISTING role.
           // We do NOT update their role based on the request body anymore.

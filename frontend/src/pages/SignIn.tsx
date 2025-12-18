@@ -42,9 +42,9 @@ export default function SignIn() {
                console.log("Attempting to call login API...");
                const result = await login({ email, role });
                console.log("Login API success", result);
-          } catch (err) {
+          } catch (err: any) {
                console.error("Login failed exception", err);
-               setError('Failed to sign in. Please try again soon.');
+               setError(err.message || 'Failed to sign in. Please try again soon.');
           }
      };
 
