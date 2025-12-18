@@ -11,6 +11,7 @@ import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Plus, Trash2, Pencil, Play, FileText, Link as LinkIcon, Search, BarChart3, Loader2 } from 'lucide-react';
+import { useToast } from '../ui/use-toast';
 import { StatsDialog } from './StatsDialog';
 import {
      Table,
@@ -29,6 +30,7 @@ interface Props {
 
 export function AssignmentManager({ assignments, groups, isLoading }: Props) {
      const { user } = useAuth();
+     const { toast } = useToast();
      const queryClient = useQueryClient();
      const [isOpen, setIsOpen] = useState(false);
      const [editingId, setEditingId] = useState<string | null>(null);
@@ -86,7 +88,30 @@ export function AssignmentManager({ assignments, groups, isLoading }: Props) {
      });
 
      const handleSubmit = () => {
-          if (!formData.title || !formData.contentUrl) return; // Basic validation
+          if (!formData.title || !formData.contentUrl) {
+               toast({ title: "Validation Error", description: "Title and Content URL are required.", variant: "destructive" });
+               return;
+          }
+
+          // Validation: Tech Leads/PMs must select at least one group
+          if (!isBoardAdmin && (!formData.groupIds || formData.groupIds.length === 0)) {
+               toast({ title: "Validation Error", description: "You must assign this to at least one group.", variant: "destructive" });
+               return;
+          }
+
+          // Validation: Due Date must be in the future
+          if (formData.dueDate) {
+               // Create date objects for comparison using local time to avoid timezone issues with YYYY-MM-DD strings
+               const [year, month, day] = formData.dueDate.toString().split('-').map(Number);
+               const due = new Date(year, month - 1, day);
+               const today = new Date();
+               today.setHours(0, 0, 0, 0);
+
+               if (due < today) {
+                    toast({ title: "Validation Error", description: "Due date must be in the future.", variant: "destructive" });
+                    return;
+               }
+          }
 
           if (editingId) {
                updateMutation.mutate({ id: editingId, data: formData });
