@@ -32,10 +32,12 @@ import { Label } from '../ui/label';
 import { Search, Loader2, Plus, Trash2, Pencil } from 'lucide-react';
 import { useToast } from '../ui/use-toast';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { useAuth } from '../../hooks/useAuth';
 
 export function MemberManager() {
      const { toast } = useToast();
      const queryClient = useQueryClient();
+     const { user } = useAuth();
 
      // State
      const [search, setSearch] = useState('');
@@ -53,20 +55,24 @@ export function MemberManager() {
 
      // Queries
      const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-          queryKey: ['users'],
-          queryFn: api.users.list
+          queryKey: ['users', user?.email],
+          queryFn: api.users.list,
+          enabled: !!user
      });
 
      const { data: groups = [] } = useQuery({
-          queryKey: ['groups'],
-          queryFn: api.groups.list
+          queryKey: ['groups', user?.email],
+          queryFn: api.groups.list,
+          enabled: !!user
      });
 
      // Mutations
      const createMutation = useMutation({
           mutationFn: api.users.create,
           onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['users'] });
+               queryClient.invalidateQueries({ queryKey: ['users', user?.email] });
+               queryClient.invalidateQueries({ queryKey: ['groups', user?.email] });
+               queryClient.invalidateQueries({ queryKey: ['assignments', user?.email] });
                setIsDialogOpen(false);
                resetForm();
                toast({ title: "Success", description: "Member added successfully." });
@@ -77,7 +83,9 @@ export function MemberManager() {
      const updateMutation = useMutation({
           mutationFn: ({ id, data }: { id: string; data: any }) => api.users.update(id, data),
           onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['users'] });
+               queryClient.invalidateQueries({ queryKey: ['users', user?.email] });
+               queryClient.invalidateQueries({ queryKey: ['groups', user?.email] });
+               queryClient.invalidateQueries({ queryKey: ['assignments', user?.email] });
                setIsDialogOpen(false);
                resetForm();
                toast({ title: "Success", description: "Member updated successfully." });
@@ -88,8 +96,8 @@ export function MemberManager() {
      const deleteMutation = useMutation({
           mutationFn: api.users.delete,
           onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['users'] });
-               queryClient.invalidateQueries({ queryKey: ['groups'] });
+               queryClient.invalidateQueries({ queryKey: ['users', user?.email] });
+               queryClient.invalidateQueries({ queryKey: ['groups', user?.email] });
                setSelectedUsers([]);
                toast({ title: "Success", description: "Members deleted successfully." });
           },

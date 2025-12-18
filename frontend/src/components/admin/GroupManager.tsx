@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, Group } from '../../lib/api';
+import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -25,10 +26,11 @@ interface Props {
 }
 
 export function GroupManager({ groups }: Props) {
+     const { user } = useAuth();
      const queryClient = useQueryClient();
      const [isOpen, setIsOpen] = useState(false);
      const [editingId, setEditingId] = useState<string | null>(null);
-     const [memberInput, setMemberInput] = useState('');
+     const [memberSearch, setMemberSearch] = useState('');
 
      const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
      const [searchQuery, setSearchQuery] = useState('');
@@ -47,7 +49,7 @@ export function GroupManager({ groups }: Props) {
                members: []
           });
           setEditingId(null);
-          setMemberInput('');
+          setMemberSearch('');
      };
 
      const handleEdit = (group: Group) => {
@@ -69,6 +71,7 @@ export function GroupManager({ groups }: Props) {
           mutationFn: ({ id, data }: { id: string, data: any }) => api.groups.update(id, data),
           onSuccess: () => {
                queryClient.invalidateQueries({ queryKey: ['groups'] });
+               queryClient.invalidateQueries({ queryKey: ['assignments'] });
                setIsOpen(false);
                resetForm();
           }
@@ -76,7 +79,10 @@ export function GroupManager({ groups }: Props) {
 
      const deleteMutation = useMutation({
           mutationFn: api.groups.delete,
-          onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] })
+          onSuccess: () => {
+               queryClient.invalidateQueries({ queryKey: ['groups'] });
+               queryClient.invalidateQueries({ queryKey: ['assignments'] });
+          }
      });
 
      const handleSubmit = () => {
@@ -88,10 +94,16 @@ export function GroupManager({ groups }: Props) {
           }
      };
 
-     const addMember = () => {
-          if (memberInput && !formData.members?.includes(memberInput)) {
-               setFormData(prev => ({ ...prev, members: [...(prev.members || []), memberInput] }));
-               setMemberInput('');
+     const { data: users = [] } = useQuery({
+          queryKey: ['users', user?.email],
+          queryFn: api.users.list,
+          enabled: !!user
+     });
+
+     const addMember = (email: string) => {
+          if (!formData.members?.includes(email)) {
+               setFormData(prev => ({ ...prev, members: [...(prev.members || []), email] }));
+               setMemberSearch('');
           }
      };
 
@@ -164,16 +176,41 @@ export function GroupManager({ groups }: Props) {
                                         </div>
 
                                         <div className="grid gap-2">
-                                             <Label>Members</Label>
-                                             <div className="flex gap-2">
+                                             <Label>Add Members</Label>
+                                             <div className="relative">
+                                                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                                   <Input
-                                                       value={memberInput}
-                                                       onChange={e => setMemberInput(e.target.value)}
-                                                       placeholder="user@example.com"
-                                                       onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addMember())}
+                                                       value={memberSearch}
+                                                       onChange={e => setMemberSearch(e.target.value)}
+                                                       placeholder="Search users to add..."
+                                                       className="pl-8"
                                                   />
-                                                  <Button type="button" variant="outline" onClick={addMember}><Plus size={16} /></Button>
                                              </div>
+
+                                             {memberSearch && (
+                                                  <div className="border rounded-md max-h-40 overflow-y-auto p-1 bg-background shadow-sm">
+                                                       {users
+                                                            .filter(u =>
+                                                                 !formData.members?.includes(u.email) &&
+                                                                 (u.fullName?.toLowerCase().includes(memberSearch.toLowerCase()) || u.email.includes(memberSearch.toLowerCase()))
+                                                            )
+                                                            .map(u => (
+                                                                 <div key={u.id} className="flex items-center justify-between p-2 hover:bg-accent rounded-sm cursor-pointer" onClick={() => addMember(u.email)}>
+                                                                      <div className="flex flex-col">
+                                                                           <span className="text-sm font-medium">{u.fullName}</span>
+                                                                           <span className="text-xs text-muted-foreground">{u.email}</span>
+                                                                      </div>
+                                                                      <Button type="button" size="icon" variant="ghost" className="h-6 w-6"><Plus size={14} /></Button>
+                                                                 </div>
+                                                            ))
+                                                       }
+                                                       {users.length > 0 && users.filter(u => !formData.members?.includes(u.email) && (u.fullName?.toLowerCase().includes(memberSearch.toLowerCase()) || u.email.includes(memberSearch.toLowerCase()))).length === 0 && (
+                                                            <p className="text-xs text-muted-foreground p-2 text-center">No matching users found.</p>
+                                                       )}
+                                                  </div>
+                                             )}
+
+                                             <Label className="mt-2">Selected Members</Label>
                                              <div className="flex flex-wrap gap-2 mt-2 p-2 border rounded-md min-h-[60px] bg-muted/20">
                                                   {formData.members?.map(email => (
                                                        <Badge key={email} variant="secondary" className="pl-2 pr-1 gap-1">

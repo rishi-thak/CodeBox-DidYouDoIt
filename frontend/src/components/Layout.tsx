@@ -4,6 +4,8 @@ import { BackgroundOrbs } from './BackgroundOrbs';
 import { Button } from './ui/button';
 import { LogOut, UserCircle, FileText } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '../lib/api';
 // Dropdown removed for MVP simplicity
 // Note: I haven't implemented DropdownMenu yet, I might need to if I use it.
 // I will stick to a simple button for logout or just a button.
@@ -18,6 +20,17 @@ import Footer from './Footer';
 export function Layout({ children }: { children: React.ReactNode }) {
      const { user, logout } = useAuth();
      const location = useLocation();
+     const queryClient = useQueryClient();
+
+     // Proactive Prefetching
+     React.useEffect(() => {
+          if (user) {
+               // Prefetch data for both Assignments and Admin pages as they share keys now
+               queryClient.prefetchQuery({ queryKey: ['assignments', user.email], queryFn: api.assignments.list });
+               queryClient.prefetchQuery({ queryKey: ['groups', user.email], queryFn: api.groups.list });
+               queryClient.prefetchQuery({ queryKey: ['completions', user.email], queryFn: api.completions.list });
+          }
+     }, [user, queryClient]);
 
      const isAuth = !!user;
 

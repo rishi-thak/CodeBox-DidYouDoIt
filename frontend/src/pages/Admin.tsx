@@ -12,8 +12,16 @@ import { api } from '../lib/api';
 export default function Admin() {
      const { user } = useAuth();
 
-     const { data: assignments = [] } = useQuery({ queryKey: ['assignments'], queryFn: api.assignments.list });
-     const { data: groups = [] } = useQuery({ queryKey: ['groups'], queryFn: api.groups.list });
+     const { data: assignments = [] } = useQuery({
+          queryKey: ['assignments', user?.email],
+          queryFn: api.assignments.list,
+          enabled: !!user
+     });
+     const { data: groups = [] } = useQuery({
+          queryKey: ['groups', user?.email],
+          queryFn: api.groups.list,
+          enabled: !!user
+     });
 
      const stats = {
           totalAssignments: assignments?.length || 0,
