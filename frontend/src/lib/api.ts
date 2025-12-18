@@ -72,13 +72,14 @@ export const api = {
                });
                if (!res.ok) {
                     const errorText = await res.text();
+                    let errorMessage = errorText || res.statusText;
                     try {
                          const errorJson = JSON.parse(errorText);
-                         throw new Error(errorJson.error || "Login failed");
-                    } catch (e: any) {
-                         // If parsing failed or custom error thrown above
-                         throw new Error(e.message === "Login failed" ? e.message : (errorText || res.statusText));
+                         if (errorJson.error) errorMessage = errorJson.error;
+                    } catch (e) {
+                         // ignore json parse error
                     }
+                    throw new Error(errorMessage);
                }
                const data = await res.json();
                localStorage.setItem('token', data.token);

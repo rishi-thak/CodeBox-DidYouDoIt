@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, User, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -11,6 +11,7 @@ export default function SignIn() {
 
      const [email, setEmail] = useState('');
      const [error, setError] = useState('');
+     const [isSubmitting, setIsSubmitting] = useState(false);
 
      const handleLogin = async (role: string) => {
           console.log("Handle Login clicked with role:", role);
@@ -39,12 +40,14 @@ export default function SignIn() {
           }
 
           try {
+               setIsSubmitting(true);
                console.log("Attempting to call login API...");
                const result = await login({ email, role });
                console.log("Login API success", result);
           } catch (err: any) {
                console.error("Login failed exception", err);
                setError(err.message || 'Failed to sign in. Please try again soon.');
+               setIsSubmitting(false);
           }
      };
 
@@ -69,7 +72,7 @@ export default function SignIn() {
                                    type="email"
                                    placeholder="you@university.edu"
                                    value={email}
-                                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                                   onChange={(e) => { setEmail(e.target.value); setError(''); setIsSubmitting(false); }}
                                    className="h-12 bg-background/50"
                                    autoFocus
                               />
@@ -79,9 +82,18 @@ export default function SignIn() {
                          <div className="space-y-3 pt-4">
                               <Button
                                    className="w-full h-12 text-lg gap-2"
-                                   onClick={() => handleLogin('DEVELOPER')} // Pass default, backend/route handles redirect
+                                   onClick={() => handleLogin('DEVELOPER')}
+                                   disabled={isSubmitting}
                               >
-                                   <User size={18} /> Sign In
+                                   {isSubmitting ? (
+                                        <>
+                                             <Loader2 className="animate-spin" size={18} /> Signing In...
+                                        </>
+                                   ) : (
+                                        <>
+                                             <User size={18} /> Sign In
+                                        </>
+                                   )}
                               </Button>
                          </div>
                     </div>

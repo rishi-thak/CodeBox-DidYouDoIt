@@ -60,24 +60,22 @@ export function MemberManager() {
 
      // Queries
      const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-          queryKey: ['users', user?.email],
-          queryFn: api.users.list,
-          enabled: !!user
+          queryKey: ['users'],
+          queryFn: api.users.list
      });
 
      const { data: groups = [] } = useQuery({
-          queryKey: ['groups', user?.email],
-          queryFn: api.groups.list,
-          enabled: !!user
+          queryKey: ['groups'],
+          queryFn: api.groups.list
      });
 
      // Mutations
      const createMutation = useMutation({
           mutationFn: api.users.create,
           onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['users', user?.email] });
-               queryClient.invalidateQueries({ queryKey: ['groups', user?.email] });
-               queryClient.invalidateQueries({ queryKey: ['assignments', user?.email] });
+               queryClient.invalidateQueries({ queryKey: ['users'] });
+               queryClient.invalidateQueries({ queryKey: ['groups'] });
+               queryClient.invalidateQueries({ queryKey: ['assignments'] });
                // Don't close/reset here if reusing logic, wait for loop
           },
           onError: () => toast({ title: "Error", description: "Failed to add member", variant: "destructive" })
@@ -86,9 +84,9 @@ export function MemberManager() {
      const updateMutation = useMutation({
           mutationFn: ({ id, data }: { id: string; data: any }) => api.users.update(id, data),
           onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['users', user?.email] });
-               queryClient.invalidateQueries({ queryKey: ['groups', user?.email] });
-               queryClient.invalidateQueries({ queryKey: ['assignments', user?.email] });
+               queryClient.invalidateQueries({ queryKey: ['users'] });
+               queryClient.invalidateQueries({ queryKey: ['groups'] });
+               queryClient.invalidateQueries({ queryKey: ['assignments'] });
                setIsDialogOpen(false);
                resetForm();
                toast({ title: "Success", description: "Member updated successfully." });
@@ -99,8 +97,8 @@ export function MemberManager() {
      const deleteMutation = useMutation({
           mutationFn: api.users.delete,
           onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['users', user?.email] });
-               queryClient.invalidateQueries({ queryKey: ['groups', user?.email] });
+               queryClient.invalidateQueries({ queryKey: ['users'] });
+               queryClient.invalidateQueries({ queryKey: ['groups'] });
                setSelectedUsers([]);
                toast({ title: "Success", description: "Members deleted successfully." });
           },

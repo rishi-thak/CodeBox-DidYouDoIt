@@ -23,12 +23,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
      const queryClient = useQueryClient();
 
      // Proactive Prefetching
+     // Proactive Prefetching
      React.useEffect(() => {
-          if (user) {
-               // Prefetch data for both Assignments and Admin pages as they share keys now
-               queryClient.prefetchQuery({ queryKey: ['assignments', user.email], queryFn: api.assignments.list });
-               queryClient.prefetchQuery({ queryKey: ['groups', user.email], queryFn: api.groups.list });
-               queryClient.prefetchQuery({ queryKey: ['completions', user.email], queryFn: api.completions.list });
+          const token = localStorage.getItem('token');
+          if (user || token) {
+               // Prefetch data immediately if we have a token or user
+               queryClient.prefetchQuery({ queryKey: ['assignments'], queryFn: api.assignments.list });
+               queryClient.prefetchQuery({ queryKey: ['groups'], queryFn: api.groups.list });
+               queryClient.prefetchQuery({ queryKey: ['completions'], queryFn: api.completions.list });
           }
      }, [user, queryClient]);
 

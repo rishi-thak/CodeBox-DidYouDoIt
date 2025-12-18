@@ -12,15 +12,13 @@ import { api } from '../lib/api';
 export default function Admin() {
      const { user } = useAuth();
 
-     const { data: assignments = [] } = useQuery({
-          queryKey: ['assignments', user?.email],
-          queryFn: api.assignments.list,
-          enabled: !!user
+     const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
+          queryKey: ['assignments'],
+          queryFn: api.assignments.list
      });
      const { data: groups = [] } = useQuery({
-          queryKey: ['groups', user?.email],
-          queryFn: api.groups.list,
-          enabled: !!user
+          queryKey: ['groups'],
+          queryFn: api.groups.list
      });
 
      const stats = {
@@ -57,7 +55,7 @@ export default function Admin() {
                          )}
                     </TabsList>
                     <TabsContent value="assignments" className="space-y-4">
-                         <AssignmentManager assignments={assignments} groups={groups} />
+                         <AssignmentManager assignments={assignments} groups={groups} isLoading={assignmentsLoading} />
                     </TabsContent>
                     {user?.role === 'BOARD_ADMIN' && (
                          <>

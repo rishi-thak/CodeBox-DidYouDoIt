@@ -7,12 +7,10 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { Plus, Trash2, Pencil, ExternalLink, Play, FileText, Link as LinkIcon, Calendar, Search, BarChart3 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Plus, Trash2, Pencil, Play, FileText, Link as LinkIcon, Search, BarChart3, Loader2 } from 'lucide-react';
 import { StatsDialog } from './StatsDialog';
 import {
      Table,
@@ -26,9 +24,10 @@ import {
 interface Props {
      assignments: Assignment[];
      groups: Group[];
+     isLoading?: boolean;
 }
 
-export function AssignmentManager({ assignments, groups }: Props) {
+export function AssignmentManager({ assignments, groups, isLoading }: Props) {
      const { user } = useAuth();
      const queryClient = useQueryClient();
      const [isOpen, setIsOpen] = useState(false);
@@ -322,7 +321,15 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                         </TableCell>
                                    </TableRow>
                               ))}
-                              {filteredAssignments.length === 0 && (
+                              {isLoading ? (
+                                   <TableRow>
+                                        <TableCell colSpan={6} className="h-24 text-center">
+                                             <div className="flex justify-center items-center">
+                                                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                             </div>
+                                        </TableCell>
+                                   </TableRow>
+                              ) : filteredAssignments.length === 0 && (
                                    <TableRow>
                                         <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                                              No assignments found.

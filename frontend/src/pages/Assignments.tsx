@@ -19,28 +19,28 @@ export default function Assignments() {
      const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
      const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
-          queryKey: ['assignments', user?.email],
+          queryKey: ['assignments'],
           queryFn: api.assignments.list,
-          enabled: !!user
+          staleTime: 1000 * 60 * 5 // 5 min stale time
      });
 
      const { data: groups = [], isLoading: groupsLoading } = useQuery({
-          queryKey: ['groups', user?.email],
+          queryKey: ['groups'],
           queryFn: api.groups.list,
-          enabled: !!user
+          staleTime: 1000 * 60 * 5
      });
 
      const { data: completions = [], isLoading: completionsLoading } = useQuery({
-          queryKey: ['completions', user?.email],
+          queryKey: ['completions'],
           queryFn: api.completions.list,
-          enabled: !!user
+          staleTime: 1000 * 60 * 5
      });
 
      const toggleMutation = useMutation({
           mutationFn: ({ assignmentId, userEmail }: { assignmentId: string, userEmail: string }) =>
                api.completions.toggle(assignmentId, userEmail),
           onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['completions', user?.email] });
+               queryClient.invalidateQueries({ queryKey: ['completions'] });
           }
      });
 
