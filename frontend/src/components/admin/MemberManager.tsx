@@ -29,7 +29,7 @@ import {
      SelectValue,
 } from '../ui/select';
 import { Label } from '../ui/label';
-import { Search, Loader2, Plus, Trash2, Pencil } from 'lucide-react';
+import { Search, Loader2, Plus, Trash2, Pencil, X } from 'lucide-react';
 import { useToast } from '../ui/use-toast';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../hooks/useAuth';
@@ -45,13 +45,18 @@ export function MemberManager() {
      const [isDialogOpen, setIsDialogOpen] = useState(false);
      const [editingUser, setEditingUser] = useState<User | null>(null);
 
+     // Mass Add Mode
+     const [isMassMode, setIsMassMode] = useState(false);
+     const [massFormData, setMassFormData] = useState<Array<{ fullName: string, email: string, role: string, groupIds: string[] }>>([]);
+
      // Form State (for both add and edit)
-     const [formData, setFormData] = useState({
+     const initialFormState = {
           fullName: '',
           email: '',
           role: 'DEVELOPER',
           groupIds: [] as string[]
-     });
+     };
+     const [formData, setFormData] = useState(initialFormState);
 
      // Queries
      const { data: users = [], isLoading: isLoadingUsers } = useQuery({
@@ -73,9 +78,7 @@ export function MemberManager() {
                queryClient.invalidateQueries({ queryKey: ['users', user?.email] });
                queryClient.invalidateQueries({ queryKey: ['groups', user?.email] });
                queryClient.invalidateQueries({ queryKey: ['assignments', user?.email] });
-               setIsDialogOpen(false);
-               resetForm();
-               toast({ title: "Success", description: "Member added successfully." });
+               // Don't close/reset here if reusing logic, wait for loop
           },
           onError: () => toast({ title: "Error", description: "Failed to add member", variant: "destructive" })
      });
@@ -105,8 +108,10 @@ export function MemberManager() {
      });
 
      const resetForm = () => {
-          setFormData({ fullName: '', email: '', role: 'DEVELOPER', groupIds: [] });
+          setFormData(initialFormState);
           setEditingUser(null);
+          setIsMassMode(false);
+          setMassFormData([]);
      };
 
      const handleEdit = (user: User) => {
@@ -125,26 +130,108 @@ export function MemberManager() {
           setIsDialogOpen(true);
      };
 
-     const handleSave = () => {
-          console.log("Handle Save Triggered", formData);
-          // Validation
-          if (!formData.email || !formData.fullName) {
-               console.log("Validation Failed");
-               toast({ title: "Validation Error", description: "Name and Email are required", variant: "destructive" });
+     // Transition to Mass Mode
+     const handleAddAnother = () => {
+          // If we are currently in single mode, take current input and move to mass data
+          if (!isMassMode) {
+               setIsMassMode(true);
+               // Add current input + one new empty row
+               setMassFormData([
+                    { ...formData },
+                    { ...initialFormState }
+               ]);
+          } else {
+               // Already in mass mode, just add another row
+               setMassFormData(prev => [...prev, { ...initialFormState }]);
+          }
+     };
+
+     const updateMassRow = (index: number, field: string, value: any) => {
+          const newData = [...massFormData];
+          newData[index] = { ...newData[index], [field]: value };
+          setMassFormData(newData);
+     };
+
+     const removeMassRow = (index: number) => {
+          const newData = massFormData.filter((_, i) => i !== index);
+          setMassFormData(newData);
+          if (newData.length === 0) {
+               // if all removed, maybe go back to single mode or keep empty one?
+               // Let's keep empty one
+               setMassFormData([{ ...initialFormState }]);
+          }
+     };
+
+     const handleSave = async () => {
+          if (editingUser) {
+               // Edit Logic
+               if (!formData.email || !formData.fullName) {
+                    toast({ title: "Validation Error", description: "Name and Email are required", variant: "destructive" });
+                    return;
+               }
+               const payload = {
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    role: formData.role,
+                    groupIds: formData.groupIds
+               };
+               updateMutation.mutate({ id: editingUser.id, data: payload });
                return;
           }
 
-          const payload = {
-               fullName: formData.fullName,
-               email: formData.email,
-               role: formData.role,
-               groupIds: formData.groupIds
-          };
+          if (isMassMode) {
+               // Bulk Create Logic
+               const validRows = massFormData.filter(r => r.fullName && r.email);
+               if (validRows.length === 0) {
+                    toast({ title: "Validation Error", description: "Please enter at least one valid member.", variant: "destructive" });
+                    return;
+               }
 
-          if (editingUser) {
-               updateMutation.mutate({ id: editingUser.id, data: payload });
+               try {
+                    // Create all sequentially or parallel
+                    // Using Promise.all for speed
+                    // We need to handle them one by one to show progress or just all at once?
+                    // Let's do parallel
+                    await Promise.all(validRows.map(row => api.users.create(row)));
+
+                    queryClient.invalidateQueries({ queryKey: ['users', user?.email] });
+                    queryClient.invalidateQueries({ queryKey: ['groups', user?.email] });
+                    queryClient.invalidateQueries({ queryKey: ['assignments', user?.email] });
+
+                    setIsDialogOpen(false);
+                    resetForm();
+                    toast({ title: "Success", description: `Added ${validRows.length} members successfully.` });
+               } catch (error) {
+                    console.error(error);
+                    toast({ title: "Error", description: "Failed to add some members. Please check inputs.", variant: "destructive" });
+               }
+
           } else {
-               createMutation.mutate(payload);
+               // Single Create Logic
+               if (!formData.email || !formData.fullName) {
+                    toast({ title: "Validation Error", description: "Name and Email are required", variant: "destructive" });
+                    return;
+               }
+               const payload = {
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    role: formData.role,
+                    groupIds: formData.groupIds
+               };
+
+               // Manually triggering recreate of mutation logic here to close dialog properly
+               // Or I can use createMutation.mutateAsync
+               try {
+                    await api.users.create(payload);
+                    queryClient.invalidateQueries({ queryKey: ['users', user?.email] });
+                    queryClient.invalidateQueries({ queryKey: ['groups', user?.email] });
+                    queryClient.invalidateQueries({ queryKey: ['assignments', user?.email] });
+                    setIsDialogOpen(false);
+                    resetForm();
+                    toast({ title: "Success", description: "Member added successfully." });
+               } catch (e) {
+                    toast({ title: "Error", description: "Failed to add member", variant: "destructive" });
+               }
           }
      };
 
@@ -193,83 +280,150 @@ export function MemberManager() {
                          )}
                          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
                               <DialogTrigger asChild>
-                                   <Button size="sm">
+                                   <Button size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
                                         <Plus className="mr-2 h-4 w-4" />
                                         Add Member
                                    </Button>
                               </DialogTrigger>
-                              <DialogContent className="sm:max-w-[425px]">
+                              <DialogContent className={isMassMode ? "max-w-4xl" : "sm:max-w-[425px]"}>
                                    <DialogHeader>
-                                        <DialogTitle>{editingUser ? 'Edit Member' : 'Add New Member'}</DialogTitle>
+                                        <DialogTitle>{editingUser ? 'Edit Member' : (isMassMode ? 'Batch Add Members' : 'Add New Member')}</DialogTitle>
                                         <DialogDescription>
-                                             {editingUser ? 'Update user details and access.' : 'Add a new user to the system.'}
+                                             {editingUser ? 'Update user details and access.' : 'Add new users to the system.'}
                                         </DialogDescription>
                                    </DialogHeader>
-                                   <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                             <Label htmlFor="name">Full Name</Label>
-                                             <Input
-                                                  id="name"
-                                                  value={formData.fullName}
-                                                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                             />
-                                        </div>
-                                        <div className="grid gap-2">
-                                             <Label htmlFor="email">Email Address</Label>
-                                             <Input
-                                                  id="email"
-                                                  type="email"
-                                                  value={formData.email}
-                                                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                             />
-                                        </div>
-                                        <div className="grid gap-2">
-                                             <Label htmlFor="role">Role</Label>
-                                             <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
-                                                  <SelectTrigger>
-                                                       <SelectValue placeholder="Select a role" />
-                                                  </SelectTrigger>
-                                                  <SelectContent>
-                                                       <SelectItem value="DEVELOPER">Developer</SelectItem>
-                                                       <SelectItem value="TECH_LEAD">Tech Lead</SelectItem>
-                                                       <SelectItem value="PRODUCT_MANAGER">Product Manager</SelectItem>
-                                                       <SelectItem value="BOARD_ADMIN">Board Admin</SelectItem>
-                                                  </SelectContent>
-                                             </Select>
-                                        </div>
-                                        <div className="grid gap-2">
-                                             <Label>Assign Groups</Label>
-                                             <div className="border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
-                                                  {groups.map((group) => (
-                                                       <div key={group.id} className="flex items-center space-x-2">
-                                                            <Checkbox
-                                                                 id={`grp-${group.id}`}
-                                                                 checked={formData.groupIds.includes(group.id)}
-                                                                 onCheckedChange={(checked) => {
-                                                                      if (checked) {
-                                                                           setFormData(prev => ({ ...prev, groupIds: [...prev.groupIds, group.id] }));
-                                                                      } else {
-                                                                           setFormData(prev => ({ ...prev, groupIds: prev.groupIds.filter(id => id !== group.id) }));
-                                                                      }
-                                                                 }}
-                                                            />
-                                                            <Label htmlFor={`grp-${group.id}`} className="text-sm font-normal cursor-pointer">
-                                                                 {group.name}
-                                                            </Label>
-                                                       </div>
-                                                  ))}
-                                                  {groups.length === 0 && <span className="text-xs text-muted-foreground">No groups available</span>}
+
+                                   {!isMassMode ? (
+                                        // SINGLE MODE
+                                        <div className="grid gap-4 py-4">
+                                             <div className="grid gap-2">
+                                                  <Label htmlFor="name">Full Name</Label>
+                                                  <Input
+                                                       id="name"
+                                                       value={formData.fullName}
+                                                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                                       placeholder="e.g. John Doe"
+                                                  />
+                                             </div>
+                                             <div className="grid gap-2">
+                                                  <Label htmlFor="email">Email Address</Label>
+                                                  <Input
+                                                       id="email"
+                                                       type="email"
+                                                       value={formData.email}
+                                                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                       placeholder="john@example.com"
+                                                  />
+                                             </div>
+                                             <div className="grid gap-2">
+                                                  <Label htmlFor="role">Role</Label>
+                                                  <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
+                                                       <SelectTrigger>
+                                                            <SelectValue placeholder="Select a role" />
+                                                       </SelectTrigger>
+                                                       <SelectContent>
+                                                            <SelectItem value="DEVELOPER">Developer</SelectItem>
+                                                            <SelectItem value="TECH_LEAD">Tech Lead</SelectItem>
+                                                            <SelectItem value="PRODUCT_MANAGER">Product Manager</SelectItem>
+                                                            <SelectItem value="BOARD_ADMIN">Board Admin</SelectItem>
+                                                       </SelectContent>
+                                                  </Select>
+                                             </div>
+                                             <div className="grid gap-2">
+                                                  <Label>Assign Groups</Label>
+                                                  <div className="border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
+                                                       {groups.map((group) => (
+                                                            <div key={group.id} className="flex items-center space-x-2">
+                                                                 <Checkbox
+                                                                      id={`grp-${group.id}`}
+                                                                      checked={formData.groupIds.includes(group.id)}
+                                                                      onCheckedChange={(checked) => {
+                                                                           if (checked) {
+                                                                                setFormData(prev => ({ ...prev, groupIds: [...prev.groupIds, group.id] }));
+                                                                           } else {
+                                                                                setFormData(prev => ({ ...prev, groupIds: prev.groupIds.filter(id => id !== group.id) }));
+                                                                           }
+                                                                      }}
+                                                                 />
+                                                                 <Label htmlFor={`grp-${group.id}`} className="text-sm font-normal cursor-pointer">
+                                                                      {group.name}
+                                                                 </Label>
+                                                            </div>
+                                                       ))}
+                                                       {groups.length === 0 && <span className="text-xs text-muted-foreground">No groups available</span>}
+                                                  </div>
                                              </div>
                                         </div>
-                                   </div>
-                                   <DialogFooter>
+                                   ) : (
+                                        // MASS MODE
+                                        <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto px-1">
+                                             <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground mb-2">
+                                                  <div className="col-span-3">Full Name</div>
+                                                  <div className="col-span-4">Email</div>
+                                                  <div className="col-span-3">Role</div>
+                                                  {/* Groups suppressed in horizontal view for simplicity, OR we can add multi-select popover later. For now, let's assume default NO groups or we add a simple count */}
+                                                  {/* Actually, user didn't explicitly ask for groups column, but it's part of member data. */}
+                                                  {/* Let's skip groups in mass mode for MVP horizontal layout to fit inputs */}
+                                                  <div className="col-span-2"></div>
+                                             </div>
+                                             {massFormData.map((row, index) => (
+                                                  <div key={index} className="grid grid-cols-12 gap-2 items-start">
+                                                       <div className="col-span-3">
+                                                            <Input
+                                                                 placeholder="Name"
+                                                                 value={row.fullName}
+                                                                 onChange={e => updateMassRow(index, 'fullName', e.target.value)}
+                                                            />
+                                                       </div>
+                                                       <div className="col-span-4">
+                                                            <Input
+                                                                 placeholder="Email"
+                                                                 value={row.email}
+                                                                 onChange={e => updateMassRow(index, 'email', e.target.value)}
+                                                            />
+                                                       </div>
+                                                       <div className="col-span-3">
+                                                            <Select value={row.role} onValueChange={(val) => updateMassRow(index, 'role', val)}>
+                                                                 <SelectTrigger>
+                                                                      <SelectValue placeholder="Role" />
+                                                                 </SelectTrigger>
+                                                                 <SelectContent>
+                                                                      <SelectItem value="DEVELOPER">Developer</SelectItem>
+                                                                      <SelectItem value="TECH_LEAD">Tech Lead</SelectItem>
+                                                                      <SelectItem value="PRODUCT_MANAGER">Product Manager</SelectItem>
+                                                                      <SelectItem value="BOARD_ADMIN">Board Admin</SelectItem>
+                                                                 </SelectContent>
+                                                            </Select>
+                                                       </div>
+                                                       <div className="col-span-2 flex items-center justify-end">
+                                                            <Button variant="ghost" size="icon" onClick={() => removeMassRow(index)} tabIndex={-1}>
+                                                                 <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                                            </Button>
+                                                       </div>
+                                                  </div>
+                                             ))}
+
+                                        </div>
+                                   )}
+
+                                   <div className="flex items-center justify-between w-full mt-6 pt-2 border-t">
+                                        <Button
+                                             type="button"
+                                             variant="secondary"
+                                             onClick={handleAddAnother}
+                                             className={editingUser ? "hidden" : ""}
+                                        >
+                                             <Plus className="mr-2 h-4 w-4" />
+                                             {isMassMode ? "Add Row" : "Add Another"}
+                                        </Button>
+
                                         <Button onClick={() => handleSave()} disabled={createMutation.isPending || updateMutation.isPending}>
                                              {createMutation.isPending || updateMutation.isPending ? (
                                                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                              ) : null}
-                                             Save Changes
+                                             {isMassMode ? `Save All (${massFormData.filter(r => r.fullName).length})` : "Save Changes"}
                                         </Button>
-                                   </DialogFooter>
+                                   </div>
                               </DialogContent>
                          </Dialog>
                     </div>
@@ -319,8 +473,6 @@ export function MemberManager() {
                                         </TableRow>
                                    ) : (
                                         filteredUsers.map((user) => {
-                                             // Logic to find groups for this user (relying on group.members array from frontend)
-                                             // Or if backend returns user.groups, we could use that. Let's stick to consistent logic.
                                              const userGroups = groups.filter(g => g.members?.includes(user.email)).map(g => g.name);
 
                                              return (
