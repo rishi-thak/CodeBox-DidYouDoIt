@@ -18,28 +18,39 @@ export default function Assignments() {
      const [statusFilter, setStatusFilter] = useState('all');
      const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-     const { data: assignments = [] } = useQuery({
-          queryKey: ['assignments'],
-          queryFn: api.assignments.list
+     const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
+          queryKey: ['assignments', user?.email],
+          queryFn: api.assignments.list,
+          enabled: !!user
      });
 
-     const { data: groups = [] } = useQuery({
-          queryKey: ['groups'],
-          queryFn: api.groups.list
+     const { data: groups = [], isLoading: groupsLoading } = useQuery({
+          queryKey: ['groups', user?.email],
+          queryFn: api.groups.list,
+          enabled: !!user
      });
 
-     const { data: completions = [] } = useQuery({
-          queryKey: ['completions'],
-          queryFn: api.completions.list
+     const { data: completions = [], isLoading: completionsLoading } = useQuery({
+          queryKey: ['completions', user?.email],
+          queryFn: api.completions.list,
+          enabled: !!user
      });
 
      const toggleMutation = useMutation({
           mutationFn: ({ assignmentId, userEmail }: { assignmentId: string, userEmail: string }) =>
                api.completions.toggle(assignmentId, userEmail),
           onSuccess: () => {
-               queryClient.invalidateQueries({ queryKey: ['completions'] });
+               queryClient.invalidateQueries({ queryKey: ['completions', user?.email] });
           }
      });
+
+     if (assignmentsLoading || groupsLoading || completionsLoading) {
+          return (
+               <div className="flex justify-center items-center py-40">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+               </div>
+          );
+     }
 
      // Filter Logic
      const visibleAssignments = assignments.filter(assignment => {
@@ -72,7 +83,7 @@ export default function Assignments() {
           if (typeFilter !== 'all' && assignment.type !== typeFilter) return false;
 
           // 4. Status Filter
-          const isCompleted = completions.some(c => c.assignmentId === assignment.id && c.userEmail === user.email);
+          const isCompleted = completions.some(c => c.assignmentId === assignment.id);
           if (statusFilter === 'done' && !isCompleted) return false;
           if (statusFilter === 'pending' && isCompleted) return false;
 
@@ -90,7 +101,7 @@ export default function Assignments() {
      });
 
      const completedCount = baseAssignments.filter(a =>
-          completions.some(c => c.assignmentId === a.id && c.userEmail === user?.email)
+          completions.some(c => c.assignmentId === a.id)
      ).length;
 
      const totalCount = baseAssignments.length;
@@ -177,13 +188,14 @@ export default function Assignments() {
                )}>
                     <AnimatePresence>
                          {visibleAssignments.map((assignment, index) => {
-                              const isCompleted = completions.some(c => c.assignmentId === assignment.id && c.userEmail === user?.email);
+                              const isCompleted = completions.some(c => c.assignmentId === assignment.id);
                               return (
                                    <AssignmentCard
                                         key={assignment.id}
                                         index={index}
                                         assignment={assignment}
                                         isCompleted={isCompleted}
+                                        isToggling={toggleMutation.isPending && toggleMutation.variables?.assignmentId === assignment.id}
                                         onToggleComplete={() => user && toggleMutation.mutate({ assignmentId: assignment.id, userEmail: user.email })}
                                    />
                               );

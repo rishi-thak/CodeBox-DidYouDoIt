@@ -95,26 +95,49 @@ export const updateGroup = async (req: AuthRequest, res: Response): Promise<void
 
           // Handle members update if provided
           if (members) {
-               // Find users by email
+               // 1. Resolve emails to User IDs
                const users = await prisma.user.findMany({
-                    where: { email: { in: members } }
+                    where: { email: { in: members } },
+                    select: { id: true, email: true }
                });
 
-               // Transactional update
+               const foundEmails = new Set(users.map(u => u.email));
+               const foundUserIds = new Set(users.map(u => u.id));
+
+               // Optional: Log or return warning about missing emails
+               // const missingEmails = members.filter((m: string) => !foundEmails.has(m));
+
+               // 2. Fetch existing relations
+               const existingRelations = await prisma.userGroup.findMany({
+                    where: { groupId: id },
+                    select: { userId: true }
+               });
+               const existingUserIds = new Set(existingRelations.map(r => r.userId));
+
+               // 3. Calculate Diff
+               const toAdd = [...foundUserIds].filter(uid => !existingUserIds.has(uid));
+               const toRemove = [...existingUserIds].filter(uid => !foundUserIds.has(uid));
+
+               // 4. Transactional update
                await prisma.$transaction(async (tx) => {
                     await tx.group.update({
                          where: { id },
                          data: { name, description }
                     });
 
-                    // Sync members: Delete all existing, add new list
-                    // This is "Nuclear" approach but simple for MVP list editing
-                    await tx.userGroup.deleteMany({ where: { groupId: id } });
+                    if (toRemove.length > 0) {
+                         await tx.userGroup.deleteMany({
+                              where: {
+                                   groupId: id,
+                                   userId: { in: toRemove }
+                              }
+                         });
+                    }
 
-                    if (users.length > 0) {
+                    if (toAdd.length > 0) {
                          await tx.userGroup.createMany({
-                              data: users.map(u => ({
-                                   userId: u.id,
+                              data: toAdd.map(userId => ({
+                                   userId,
                                    groupId: id
                               }))
                          });

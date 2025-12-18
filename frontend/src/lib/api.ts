@@ -38,6 +38,20 @@ export interface Completion {
      completedAt: string;
 }
 
+export interface AssignmentStats {
+     assignmentTitle: string;
+     totalAssigned: number;
+     totalCompleted: number;
+     completionRate: number;
+     details: {
+          userId: string;
+          email: string;
+          fullName: string;
+          status: 'COMPLETED' | 'PENDING';
+          completedAt: string | null;
+     }[];
+}
+
 // Helper
 const getHeaders = () => {
      const token = localStorage.getItem('token');
@@ -122,6 +136,11 @@ export const api = {
                });
                if (!res.ok) throw new Error('Failed to delete assignment');
                return await res.json();
+          },
+          getStats: async (id: string) => {
+               const res = await fetch(`${API_URL}/assignments/${id}/stats`, { headers: getHeaders() });
+               if (!res.ok) throw new Error('Failed to fetch assignment stats');
+               return await res.json() as AssignmentStats;
           }
      },
      groups: {
@@ -175,9 +194,14 @@ export const api = {
                }
                return await res.json() as Completion[];
           },
-          toggle: async (assignmentId: string, userEmail: string) => {
-               // Not implemented in backend yet
-               return { completed: true };
+          toggle: async (assignmentId: string, userEmail: string) => { // userEmail param is largely ignored by backend now as it uses auth token
+               const res = await fetch(`${API_URL}/completions/toggle`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ assignmentId })
+               });
+               if (!res.ok) throw new Error('Failed to toggle completion');
+               return await res.json();
           }
      },
      users: {

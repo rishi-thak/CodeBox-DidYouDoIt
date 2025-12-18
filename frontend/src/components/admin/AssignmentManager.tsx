@@ -10,8 +10,9 @@ import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { Plus, Trash2, Pencil, ExternalLink, Play, FileText, Link as LinkIcon, Calendar, Search } from 'lucide-react';
+import { Plus, Trash2, Pencil, ExternalLink, Play, FileText, Link as LinkIcon, Calendar, Search, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { StatsDialog } from './StatsDialog';
 import {
      Table,
      TableBody,
@@ -30,6 +31,7 @@ export function AssignmentManager({ assignments, groups }: Props) {
      const queryClient = useQueryClient();
      const [isOpen, setIsOpen] = useState(false);
      const [editingId, setEditingId] = useState<string | null>(null);
+     const [statsId, setStatsId] = useState<string | null>(null);
 
      // Form State
      const [formData, setFormData] = useState<Partial<Assignment>>({
@@ -147,7 +149,7 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                         setSelectedAssignments([]);
                                    }
                               }}>
-                                   <Trash2 size={16} className="mr-2" /> Delete Selected ({selectedAssignments.length})
+                                   <Trash2 size={16} className="mr-2" /> {deleteMutation.isPending ? 'Deleting...' : `Delete Selected (${selectedAssignments.length})`}
                               </Button>
                          )}
                          <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
@@ -215,7 +217,9 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                         </div>
                                    </div>
                                    <DialogFooter>
-                                        <Button onClick={() => handleSubmit()}>{editingId ? 'Save Changes' : 'Create Assignment'}</Button>
+                                        <Button onClick={() => handleSubmit()} disabled={createMutation.isPending || updateMutation.isPending}>
+                                             {createMutation.isPending || updateMutation.isPending ? 'Saving...' : (editingId ? 'Save Changes' : 'Create Assignment')}
+                                        </Button>
                                    </DialogFooter>
                               </DialogContent>
                          </Dialog>
@@ -283,6 +287,9 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(assignment)}>
                                                        <Pencil size={16} className="text-blue-500" />
                                                   </Button>
+                                                  <Button variant="ghost" size="icon" onClick={() => setStatsId(assignment.id)}>
+                                                       <BarChart3 size={16} className="text-purple-500" />
+                                                  </Button>
                                                   <Button variant="ghost" size="icon" onClick={() => { if (window.confirm('Delete?')) deleteMutation.mutate(assignment.id) }}>
                                                        <Trash2 size={16} className="text-destructive" />
                                                   </Button>
@@ -300,6 +307,12 @@ export function AssignmentManager({ assignments, groups }: Props) {
                          </TableBody>
                     </Table>
                </div>
+
+               <StatsDialog
+                    assignmentId={statsId}
+                    open={!!statsId}
+                    onOpenChange={(open) => !open && setStatsId(null)}
+               />
           </div>
      );
 }

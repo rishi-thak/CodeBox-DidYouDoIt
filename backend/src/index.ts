@@ -4,6 +4,7 @@ import authRoutes from './routes/auth';
 import assignmentRoutes from './routes/assignments';
 import groupRoutes from './routes/groups';
 import userRoutes from './routes/users';
+import completionRoutes from './routes/completions';
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/completions', completionRoutes);
 
 app.get('/', (req, res) => {
      res.send('API is running');

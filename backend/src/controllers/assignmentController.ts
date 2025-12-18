@@ -144,13 +144,31 @@ export const updateAssignment = async (req: AuthRequest, res: Response): Promise
                });
 
                if (groupIds) {
-                    // Sync groups: Delete existing, add new
-                    // Note: This removes completions if cascade? No, completion is linked to Assignment, unrelated to AssignmentGroup.
-                    await tx.assignmentGroup.deleteMany({ where: { assignmentId: id } });
+                    // 1. Get current assignments
+                    const currentAssignments = await prisma.assignmentGroup.findMany({
+                         where: { assignmentId: id },
+                         select: { groupId: true }
+                    });
+                    const currentGroupIds = new Set(currentAssignments.map(a => a.groupId));
+                    const newGroupIds = new Set(groupIds as string[]);
 
-                    if (groupIds.length > 0) {
+                    // 2. Diff
+                    const toAdd = [...newGroupIds].filter(gid => !currentGroupIds.has(gid));
+                    const toRemove = [...currentGroupIds].filter(gid => !newGroupIds.has(gid));
+
+                    // 3. Apply changes
+                    if (toRemove.length > 0) {
+                         await tx.assignmentGroup.deleteMany({
+                              where: {
+                                   assignmentId: id,
+                                   groupId: { in: toRemove }
+                              }
+                         });
+                    }
+
+                    if (toAdd.length > 0) {
                          await tx.assignmentGroup.createMany({
-                              data: (groupIds as string[]).map(gid => ({
+                              data: toAdd.map(gid => ({
                                    assignmentId: id,
                                    groupId: gid
                               }))
@@ -185,15 +203,105 @@ export const deleteAssignment = async (req: AuthRequest, res: Response): Promise
           // Simplest: Board Admin only for delete? No, User said "make deleting... work" in context of flushing out tabs.
 
           if (user.role !== 'BOARD_ADMIN') {
-               // Check if assignment is assigned to groups the user manages?
-               // This is getting complex. Let's allow deletion for now if they have access to the tab.
-               // Or safer: Only Board Admin can delete.
-               // Let's stick to: Tech Leads can delete.
+               // Security Check: Can this user delete this assignment?
+               // Rule: Users can only delete assignments that are EXCLUSIVELY assigned to groups they manage.
+               // If an assignment is assigned to "Everyone" (global) or a group they don't manage, they cannot delete it.
+
+               const userGroups = await prisma.userGroup.findMany({
+                    where: { userId: user.id },
+                    select: { groupId: true }
+               });
+               const myGroupIds = new Set(userGroups.map(ug => ug.groupId));
+
+               // Fetch assignment's groups
+               const assignmentGroups = await prisma.assignmentGroup.findMany({
+                    where: { assignmentId: id },
+                    select: { groupId: true }
+               });
+
+               if (assignmentGroups.length === 0) {
+                    // Assigned to everyone -> Only Board Admin can delete
+                    res.status(403).json({ error: 'Only admins can delete global assignments' });
+                    return;
+               }
+
+               const isAssignedOnlyToMyGroups = assignmentGroups.every(ag => myGroupIds.has(ag.groupId));
+
+               if (!isAssignedOnlyToMyGroups) {
+                    res.status(403).json({ error: 'You cannot delete this assignment as it is assigned to groups you do not manage' });
+                    return;
+               }
           }
 
           await prisma.assignment.delete({ where: { id } });
           res.json({ success: true });
      } catch (error) {
           res.status(500).json({ error: 'Failed to delete assignment' });
+     }
+};
+
+export const getAssignmentStats = async (req: AuthRequest, res: Response): Promise<void> => {
+     try {
+          const { id } = req.params;
+          const user = req.user!;
+
+          // 1. Get Assignment and its Groups
+          const assignment = await prisma.assignment.findUnique({
+               where: { id },
+               include: { assignedTo: { include: { group: { include: { members: { include: { user: true } } } } } } }
+          });
+
+          if (!assignment) {
+               res.status(404).json({ error: 'Assignment not found' });
+               return;
+          }
+
+          // 2. Determine Scope of Users
+          let targetUsers: { id: string, email: string, fullName: string | null }[] = [];
+
+          if (assignment.assignedTo.length === 0) {
+               // Global assignment - All users
+               const allUsers = await prisma.user.findMany();
+               targetUsers = allUsers.map(u => ({ id: u.id, email: u.email, fullName: u.fullName }));
+          } else {
+               // Specific Groups - Collect unique users
+               const uniqueUsers = new Map<string, { id: string, email: string, fullName: string | null }>();
+               assignment.assignedTo.forEach(ag => {
+                    ag.group.members.forEach(m => {
+                         uniqueUsers.set(m.user.id, { id: m.user.id, email: m.user.email, fullName: m.user.fullName });
+                    });
+               });
+               targetUsers = Array.from(uniqueUsers.values());
+          }
+
+          // 3. Get Completions
+          const completions = await prisma.completion.findMany({
+               where: { assignmentId: id }
+          });
+          const completionMap = new Map(completions.map(c => [c.userId, c]));
+
+          // 4. Combine Data
+          const stats = targetUsers.map(u => {
+               const completion = completionMap.get(u.id);
+               return {
+                    userId: u.id,
+                    email: u.email,
+                    fullName: u.fullName || u.email.split('@')[0],
+                    status: completion ? 'COMPLETED' : 'PENDING',
+                    completedAt: completion?.completedAt || null
+               };
+          });
+
+          res.json({
+               assignmentTitle: assignment.title,
+               totalAssigned: targetUsers.length,
+               totalCompleted: completions.length,
+               completionRate: targetUsers.length > 0 ? (completions.length / targetUsers.length) * 100 : 0,
+               details: stats
+          });
+
+     } catch (error) {
+          console.error(error);
+          res.status(500).json({ error: 'Failed to fetch assignment stats' });
      }
 };

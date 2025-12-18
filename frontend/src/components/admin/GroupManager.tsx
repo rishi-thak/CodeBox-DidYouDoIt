@@ -140,7 +140,7 @@ export function GroupManager({ groups }: Props) {
                                         setSelectedGroups([]);
                                    }
                               }}>
-                                   <Trash2 size={16} className="mr-2" /> Delete Selected ({selectedGroups.length})
+                                   <Trash2 size={16} className="mr-2" /> {deleteMutation.isPending ? 'Deleting...' : `Delete Selected (${selectedGroups.length})`}
                               </Button>
                          )}
                          <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
@@ -186,7 +186,9 @@ export function GroupManager({ groups }: Props) {
                                         </div>
                                    </div>
                                    <DialogFooter>
-                                        <Button onClick={handleSubmit}>{editingId ? 'Save Changes' : 'Create Group'}</Button>
+                                        <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
+                                             {createMutation.isPending || updateMutation.isPending ? 'Saving...' : (editingId ? 'Save Changes' : 'Create Group')}
+                                        </Button>
                                    </DialogFooter>
                               </DialogContent>
                          </Dialog>

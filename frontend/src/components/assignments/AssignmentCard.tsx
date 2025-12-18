@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Assignment } from '../../lib/api';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
+import { buttonVariants } from '../ui/button';
 import { Play, FileText, Link as LinkIcon, ExternalLink, Calendar, CheckCircle2, Circle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { motion } from 'framer-motion';
@@ -11,10 +11,11 @@ interface AssignmentCardProps {
      assignment: Assignment;
      isCompleted: boolean;
      onToggleComplete: () => void;
+     isToggling?: boolean;
      index: number;
 }
 
-export function AssignmentCard({ assignment, isCompleted, onToggleComplete, index }: AssignmentCardProps) {
+export function AssignmentCard({ assignment, isCompleted, onToggleComplete, isToggling, index }: AssignmentCardProps) {
      const typeIcons = {
           VIDEO: Play,
           PDF: FileText,
@@ -95,12 +96,18 @@ export function AssignmentCard({ assignment, isCompleted, onToggleComplete, inde
                               </div>
                               <button
                                    onClick={onToggleComplete}
+                                   disabled={isToggling}
                                    className={cn(
                                         "flex-shrink-0 transition-colors",
-                                        isCompleted ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                                        isCompleted ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                                        isToggling && "opacity-50 cursor-not-allowed"
                                    )}
                               >
-                                   {isCompleted ? <CheckCircle2 size={24} /> : <Circle size={24} />}
+                                   {isToggling ? (
+                                        <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                                   ) : (
+                                        isCompleted ? <CheckCircle2 size={24} /> : <Circle size={24} />
+                                   )}
                               </button>
                          </div>
 
@@ -114,11 +121,14 @@ export function AssignmentCard({ assignment, isCompleted, onToggleComplete, inde
 
                               {!assignment.dueDate && <div />} {/* Spacer */}
 
-                              <Button size="sm" variant="outline" className="h-8 gap-1.5" asChild>
-                                   <a href={assignment.contentUrl} target="_blank" rel="noreferrer">
-                                        Open <ExternalLink size={12} />
-                                   </a>
-                              </Button>
+                              <a
+                                   href={assignment.contentUrl}
+                                   target="_blank"
+                                   rel="noreferrer"
+                                   className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-8 gap-1.5")}
+                              >
+                                   Open <ExternalLink size={12} />
+                              </a>
                          </div>
                     </div>
                </Card>
