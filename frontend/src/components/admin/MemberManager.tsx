@@ -415,11 +415,18 @@ export function MemberManager() {
                                              {isMassMode ? "Add Row" : "Add Another"}
                                         </Button>
 
-                                        <Button onClick={() => handleSave()} disabled={createMutation.isPending || updateMutation.isPending}>
+                                        <Button
+                                             onClick={() => handleSave()}
+                                             disabled={createMutation.isPending || updateMutation.isPending}
+                                        >
                                              {createMutation.isPending || updateMutation.isPending ? (
-                                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                             ) : null}
-                                             {isMassMode ? `Save All (${massFormData.filter(r => r.fullName).length})` : "Save Changes"}
+                                                  <>
+                                                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                       Saving...
+                                                  </>
+                                             ) : (
+                                                  isMassMode ? `Save All (${massFormData.filter(r => r.fullName).length})` : "Save Changes"
+                                             )}
                                         </Button>
                                    </div>
                               </DialogContent>
