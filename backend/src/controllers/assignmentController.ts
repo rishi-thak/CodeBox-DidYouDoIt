@@ -256,6 +256,31 @@ export const getAssignmentStats = async (req: AuthRequest, res: Response): Promi
                return;
           }
 
+          // Security Check: Visibility
+          if (user.role !== 'BOARD_ADMIN') {
+               // Tech Lead / PM / Dev logic
+               const userGroups = await prisma.userGroup.findMany({
+                    where: { userId: user.id },
+                    select: { groupId: true }
+               });
+               const myGroupIds = new Set(userGroups.map(ug => ug.groupId));
+
+               const assignmentGroupIds = assignment.assignedTo.map(ag => ag.groupId);
+
+               // 1. If Global Assignment (no groups), Non-Admins strictly CANNOT see stats
+               if (assignmentGroupIds.length === 0) {
+                    res.status(403).json({ error: 'You do not have permission to view stats for global assignments.' });
+                    return;
+               }
+
+               // 2. If Group Assignment, User MUST be in at least one of the target groups
+               const hasAccess = assignmentGroupIds.some(gid => myGroupIds.has(gid));
+               if (!hasAccess) {
+                    res.status(403).json({ error: 'You do not have permission to view stats for this assignment.' });
+                    return;
+               }
+          }
+
           // 2. Determine Scope of Users
           let targetUsers: { id: string, email: string, fullName: string | null }[] = [];
 

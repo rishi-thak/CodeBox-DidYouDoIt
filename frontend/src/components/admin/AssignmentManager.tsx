@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, Assignment, Group } from '../../lib/api';
+import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function AssignmentManager({ assignments, groups }: Props) {
+     const { user } = useAuth();
      const queryClient = useQueryClient();
      const [isOpen, setIsOpen] = useState(false);
      const [editingId, setEditingId] = useState<string | null>(null);
@@ -124,10 +126,28 @@ export function AssignmentManager({ assignments, groups }: Props) {
           }
      };
 
-     const filteredAssignments = assignments.filter(a =>
-          a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          a.description?.toLowerCase().includes(searchQuery.toLowerCase())
-     );
+     // Permission Logic
+     const isBoardAdmin = user?.role === 'BOARD_ADMIN';
+     const allowedGroups = isBoardAdmin
+          ? groups
+          : groups.filter(g => g.members.includes(user?.email || ''));
+
+     const canCreate = isBoardAdmin || allowedGroups.length > 0;
+
+     const filteredAssignments = assignments.filter(a => {
+          const matchesSearch = a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               a.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+          if (!matchesSearch) return false;
+
+          if (!isBoardAdmin) {
+               // Tech Leads/PMs should NOT see Global assignments in the Admin tab.
+               // They are "assigned by board" and should only appear in valid groups.
+               if (!a.groupIds || a.groupIds.length === 0) return false;
+          }
+
+          return true;
+     });
 
      return (
           <div className="space-y-4">
@@ -154,9 +174,11 @@ export function AssignmentManager({ assignments, groups }: Props) {
                          )}
                          <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
                               <DialogTrigger asChild>
-                                   <Button className="gap-2">
-                                        <Plus size={16} /> New Assignment
-                                   </Button>
+                                   <span tabIndex={0} className={!canCreate ? "cursor-not-allowed" : ""}>
+                                        <Button className="gap-2" disabled={!canCreate}>
+                                             <Plus size={16} /> New Assignment
+                                        </Button>
+                                   </span>
                               </DialogTrigger>
                               <DialogContent className="max-w-xl">
                                    <DialogHeader>
@@ -201,7 +223,7 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                         <div className="grid gap-2">
                                              <Label className="mb-2">Assign to Groups</Label>
                                              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded-md">
-                                                  {groups.map(group => (
+                                                  {allowedGroups.map(group => (
                                                        <div key={group.id} className="flex items-center space-x-2">
                                                             <Checkbox
                                                                  id={`grp-${group.id}`}
@@ -211,9 +233,10 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                                             <Label htmlFor={`grp-${group.id}`} className="font-normal cursor-pointer">{group.name}</Label>
                                                        </div>
                                                   ))}
-                                                  {groups.length === 0 && <p className="text-sm text-muted-foreground col-span-2">No groups available.</p>}
+                                                  {allowedGroups.length === 0 && <p className="text-sm text-muted-foreground col-span-2">No groups available to assign.</p>}
                                              </div>
-                                             <p className="text-xs text-muted-foreground">Leave empty to assign to everyone.</p>
+                                             {isBoardAdmin && <p className="text-xs text-muted-foreground">Leave empty to assign to everyone.</p>}
+                                             {!isBoardAdmin && <p className="text-xs text-muted-foreground text-orange-500">You must select at least one group.</p>}
                                         </div>
                                    </div>
                                    <DialogFooter>
@@ -287,9 +310,11 @@ export function AssignmentManager({ assignments, groups }: Props) {
                                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(assignment)}>
                                                        <Pencil size={16} className="text-blue-500" />
                                                   </Button>
-                                                  <Button variant="ghost" size="icon" onClick={() => setStatsId(assignment.id)}>
-                                                       <BarChart3 size={16} className="text-purple-500" />
-                                                  </Button>
+                                                  {(isBoardAdmin || (assignment.groupIds && assignment.groupIds.some(gid => allowedGroups.some(g => g.id === gid)))) && (
+                                                       <Button variant="ghost" size="icon" onClick={() => setStatsId(assignment.id)}>
+                                                            <BarChart3 size={16} className="text-purple-500" />
+                                                       </Button>
+                                                  )}
                                                   <Button variant="ghost" size="icon" onClick={() => { if (window.confirm('Delete?')) deleteMutation.mutate(assignment.id) }}>
                                                        <Trash2 size={16} className="text-destructive" />
                                                   </Button>
