@@ -80,7 +80,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                         </div>
                                    </div>
 
-                                   <Button variant="ghost" size="icon" onClick={() => logout()} title="Sign Out">
+                                   <Button variant="ghost" size="icon" onClick={() => {
+                                        logout();
+                                        // Force redirect to home, although useAuth updates state, navigate ensures we leave protected routes
+                                        window.location.href = '/';
+                                   }} title="Sign Out">
                                         <LogOut size={18} />
                                    </Button>
                               </div>

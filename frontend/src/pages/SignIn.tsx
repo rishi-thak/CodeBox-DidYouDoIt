@@ -75,6 +75,11 @@ export default function SignIn() {
                                    onChange={(e) => { setEmail(e.target.value); setError(''); setIsSubmitting(false); }}
                                    className="h-12 bg-background/50"
                                    autoFocus
+                                   onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                             handleLogin('DEVELOPER');
+                                        }
+                                   }}
                               />
                               {error && <p className="text-sm text-destructive font-medium">{error}</p>}
                          </div>

@@ -19,19 +19,18 @@ export default function Home() {
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                          </span>
-                         New way to track assignments
+                         Reimagined for the modern student
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6">
-                         Track your progress.<br />
+                         Assignments, managed.<br />
                          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-green-300">
-                              Stay on track.
+                              Potential, unlocked.
                          </span>
                     </h1>
 
                     <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                         The all-in-one platform for managing learning materials, videos, and assignments.
-                         Simple, fast, and beautiful.
+                         Focus on the work, not the logistics. A centralized hub for tracking every assignment, video, and resource.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
@@ -64,8 +63,8 @@ export default function Home() {
 
                     <div className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 text-left">
                          {[
-                              { icon: Play, title: "Video Lessons", desc: "Track progress on video tutorials automatically." },
-                              { icon: FileText, title: "Documents", desc: "Keep all your PDFs and docs in one place." },
+                              { icon: Play, title: "Video Lessons", desc: "Seamless tracking for every video tutorial." },
+                              { icon: FileText, title: "Documents", desc: "Centralize every guide, spec, and PDF." },
                               { icon: LinkIcon, title: "Resources", desc: "Curated links for easier access to materials." }
                          ].map((item, i) => (
                               <motion.div
