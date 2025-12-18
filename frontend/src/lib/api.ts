@@ -53,12 +53,26 @@ export interface AssignmentStats {
 }
 
 // Helper
+// Helper
 const getHeaders = () => {
-     const token = localStorage.getItem('token');
+     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
      return {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
      };
+};
+
+export const setAuthToken = (token: string, remember: boolean) => {
+     if (remember) {
+          localStorage.setItem('token', token);
+     } else {
+          sessionStorage.setItem('token', token);
+     }
+};
+
+export const clearAuthToken = () => {
+     localStorage.removeItem('token');
+     sessionStorage.removeItem('token');
 };
 
 export const api = {
@@ -82,18 +96,18 @@ export const api = {
                     throw new Error(errorMessage);
                }
                const data = await res.json();
-               localStorage.setItem('token', data.token);
-               return data.user as User;
+               // Token handling is now pushed to the caller (SignIn page or useAuth)
+               return { user: data.user as User, token: data.token as string };
           },
           logout: async () => {
-               localStorage.removeItem('token');
+               clearAuthToken();
           },
           me: async () => {
-               const token = localStorage.getItem('token');
+               const token = localStorage.getItem('token') || sessionStorage.getItem('token');
                if (!token) return null;
                const res = await fetch(`${API_URL}/auth/me`, { headers: getHeaders() });
                if (!res.ok) {
-                    localStorage.removeItem('token');
+                    clearAuthToken();
                     return null;
                }
                return await res.json() as User;
