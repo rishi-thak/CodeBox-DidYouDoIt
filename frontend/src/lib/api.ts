@@ -54,8 +54,14 @@ export interface AssignmentStats {
 
 // Helper
 // Helper
-const getHeaders = () => {
-     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+const getHeaders = (tokenOverride?: string) => {
+     let token = tokenOverride || localStorage.getItem('token') || sessionStorage.getItem('token');
+
+     // Safety check for bad token strings
+     if (token === 'null' || token === 'undefined') {
+          token = null;
+     }
+
      return {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -114,8 +120,8 @@ export const api = {
           }
      },
      assignments: {
-          list: async () => {
-               const res = await fetch(`${API_URL}/assignments`, { headers: getHeaders() });
+          list: async (token?: string) => {
+               const res = await fetch(`${API_URL}/assignments`, { headers: getHeaders(token) });
                if (!res.ok) throw new Error('Failed to fetch assignments');
                const data = await res.json();
                // Map backend structure to frontend interface
@@ -157,8 +163,8 @@ export const api = {
           }
      },
      groups: {
-          list: async () => {
-               const res = await fetch(`${API_URL}/groups`, { headers: getHeaders() });
+          list: async (token?: string) => {
+               const res = await fetch(`${API_URL}/groups`, { headers: getHeaders(token) });
                if (!res.ok) throw new Error('Failed to fetch groups');
                return await res.json() as Group[];
           },
@@ -190,8 +196,8 @@ export const api = {
           }
      },
      completions: {
-          list: async () => {
-               const res = await fetch(`${API_URL}/completions`, { headers: getHeaders() });
+          list: async (token?: string) => {
+               const res = await fetch(`${API_URL}/completions`, { headers: getHeaders(token) });
                if (!res.ok) {
                     // If 404, it might just mean the route isn't implemented fully yet, so return empty
                     if (res.status === 404) return [];
@@ -218,8 +224,8 @@ export const api = {
           }
      },
      users: {
-          list: async () => {
-               const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
+          list: async (token?: string) => {
+               const res = await fetch(`${API_URL}/users`, { headers: getHeaders(token) });
                if (!res.ok) throw new Error('Failed to fetch users');
                return await res.json() as User[];
           },

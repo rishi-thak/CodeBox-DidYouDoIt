@@ -53,8 +53,37 @@ export default function SignIn() {
                // This also gives us the backend token we'll need later
                const { user, token } = await api.auth.login(email, 'DEVELOPER');
 
+
                setTempUser(user);
                setTempToken(token);
+
+               // Start prefetching data using the fresh token
+               // This runs in parallel with OTP sending/entry
+               queryClient.prefetchQuery({
+                    queryKey: ['assignments'],
+                    queryFn: () => api.assignments.list(token),
+                    staleTime: 1000 * 60 * 5,
+               });
+               queryClient.prefetchQuery({
+                    queryKey: ['groups'],
+                    queryFn: () => api.groups.list(token),
+                    staleTime: 1000 * 60 * 5,
+               });
+
+               queryClient.prefetchQuery({
+                    queryKey: ['completions'],
+                    queryFn: () => api.completions.list(token),
+                    staleTime: 1000 * 60 * 5,
+               });
+
+               // Prefetch users if admin
+               if (user.role === 'BOARD_ADMIN') {
+                    queryClient.prefetchQuery({
+                         queryKey: ['users'],
+                         queryFn: () => api.users.list(token),
+                         staleTime: 1000 * 60 * 5,
+                    });
+               }
 
                // 2. Send OTP via Supabase
                const { error: supabaseError } = await supabase.auth.signInWithOtp({

@@ -61,12 +61,12 @@ export function MemberManager() {
      // Queries
      const { data: users = [], isLoading: isLoadingUsers } = useQuery({
           queryKey: ['users'],
-          queryFn: api.users.list
+          queryFn: () => api.users.list()
      });
 
      const { data: groups = [] } = useQuery({
           queryKey: ['groups'],
-          queryFn: api.groups.list
+          queryFn: () => api.groups.list()
      });
 
      // Mutations

@@ -27,10 +27,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
      React.useEffect(() => {
           const token = localStorage.getItem('token');
           if (user || token) {
+
+
                // Prefetch data immediately if we have a token or user
-               queryClient.prefetchQuery({ queryKey: ['assignments'], queryFn: api.assignments.list });
-               queryClient.prefetchQuery({ queryKey: ['groups'], queryFn: api.groups.list });
-               queryClient.prefetchQuery({ queryKey: ['completions'], queryFn: api.completions.list });
+               queryClient.prefetchQuery({ queryKey: ['assignments'], queryFn: () => api.assignments.list() });
+               queryClient.prefetchQuery({ queryKey: ['groups'], queryFn: () => api.groups.list() });
+               queryClient.prefetchQuery({ queryKey: ['completions'], queryFn: () => api.completions.list() });
+
+               if (user?.role === 'BOARD_ADMIN') {
+                    queryClient.prefetchQuery({ queryKey: ['users'], queryFn: () => api.users.list() });
+               }
+
           }
      }, [user, queryClient]);
 

@@ -20,19 +20,20 @@ export default function Assignments() {
 
      const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
           queryKey: ['assignments'],
-          queryFn: api.assignments.list,
+
+          queryFn: () => api.assignments.list(),
           staleTime: 1000 * 60 * 5 // 5 min stale time
      });
 
      const { data: groups = [], isLoading: groupsLoading } = useQuery({
           queryKey: ['groups'],
-          queryFn: api.groups.list,
+          queryFn: () => api.groups.list(),
           staleTime: 1000 * 60 * 5
      });
 
      const { data: completions = [], isLoading: completionsLoading } = useQuery({
           queryKey: ['completions'],
-          queryFn: api.completions.list,
+          queryFn: () => api.completions.list(),
           staleTime: 1000 * 60 * 5
      });
 
