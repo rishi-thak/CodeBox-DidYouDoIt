@@ -12,8 +12,8 @@ export function useAuth() {
 
      const loginMutation = useMutation({
           mutationFn: ({ email, role }: { email: string, role: string }) => api.auth.login(email, role),
-          onSuccess: (newUser) => {
-               queryClient.setQueryData(['auth', 'me'], newUser);
+          onSuccess: (data) => {
+               queryClient.setQueryData(['auth', 'me'], data.user);
           },
      });
 

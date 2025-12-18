@@ -53,12 +53,32 @@ export interface AssignmentStats {
 }
 
 // Helper
-const getHeaders = () => {
-     const token = localStorage.getItem('token');
+// Helper
+const getHeaders = (tokenOverride?: string) => {
+     let token = tokenOverride || localStorage.getItem('token') || sessionStorage.getItem('token');
+
+     // Safety check for bad token strings
+     if (token === 'null' || token === 'undefined') {
+          token = null;
+     }
+
      return {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
      };
+};
+
+export const setAuthToken = (token: string, remember: boolean) => {
+     if (remember) {
+          localStorage.setItem('token', token);
+     } else {
+          sessionStorage.setItem('token', token);
+     }
+};
+
+export const clearAuthToken = () => {
+     localStorage.removeItem('token');
+     sessionStorage.removeItem('token');
 };
 
 export const api = {
@@ -82,26 +102,26 @@ export const api = {
                     throw new Error(errorMessage);
                }
                const data = await res.json();
-               localStorage.setItem('token', data.token);
-               return data.user as User;
+               // Token handling is now pushed to the caller (SignIn page or useAuth)
+               return { user: data.user as User, token: data.token as string };
           },
           logout: async () => {
-               localStorage.removeItem('token');
+               clearAuthToken();
           },
           me: async () => {
-               const token = localStorage.getItem('token');
+               const token = localStorage.getItem('token') || sessionStorage.getItem('token');
                if (!token) return null;
                const res = await fetch(`${API_URL}/auth/me`, { headers: getHeaders() });
                if (!res.ok) {
-                    localStorage.removeItem('token');
+                    clearAuthToken();
                     return null;
                }
                return await res.json() as User;
           }
      },
      assignments: {
-          list: async () => {
-               const res = await fetch(`${API_URL}/assignments`, { headers: getHeaders() });
+          list: async (token?: string) => {
+               const res = await fetch(`${API_URL}/assignments`, { headers: getHeaders(token) });
                if (!res.ok) throw new Error('Failed to fetch assignments');
                const data = await res.json();
                // Map backend structure to frontend interface
@@ -143,8 +163,8 @@ export const api = {
           }
      },
      groups: {
-          list: async () => {
-               const res = await fetch(`${API_URL}/groups`, { headers: getHeaders() });
+          list: async (token?: string) => {
+               const res = await fetch(`${API_URL}/groups`, { headers: getHeaders(token) });
                if (!res.ok) throw new Error('Failed to fetch groups');
                return await res.json() as Group[];
           },
@@ -176,8 +196,8 @@ export const api = {
           }
      },
      completions: {
-          list: async () => {
-               const res = await fetch(`${API_URL}/completions`, { headers: getHeaders() });
+          list: async (token?: string) => {
+               const res = await fetch(`${API_URL}/completions`, { headers: getHeaders(token) });
                if (!res.ok) {
                     // If 404, it might just mean the route isn't implemented fully yet, so return empty
                     if (res.status === 404) return [];
@@ -204,8 +224,8 @@ export const api = {
           }
      },
      users: {
-          list: async () => {
-               const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
+          list: async (token?: string) => {
+               const res = await fetch(`${API_URL}/users`, { headers: getHeaders(token) });
                if (!res.ok) throw new Error('Failed to fetch users');
                return await res.json() as User[];
           },

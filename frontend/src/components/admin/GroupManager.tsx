@@ -96,7 +96,7 @@ export function GroupManager({ groups }: Props) {
 
      const { data: users = [] } = useQuery({
           queryKey: ['users'],
-          queryFn: api.users.list
+          queryFn: () => api.users.list()
      });
 
      const addMember = (email: string) => {

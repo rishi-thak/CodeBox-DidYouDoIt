@@ -14,11 +14,12 @@ export default function Admin() {
 
      const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
           queryKey: ['assignments'],
-          queryFn: api.assignments.list
+
+          queryFn: () => api.assignments.list()
      });
      const { data: groups = [] } = useQuery({
           queryKey: ['groups'],
-          queryFn: api.groups.list
+          queryFn: () => api.groups.list()
      });
 
      const stats = {
