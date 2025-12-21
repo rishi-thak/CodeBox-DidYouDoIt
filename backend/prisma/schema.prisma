@@ -7,12 +7,55 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  DEVELOPER
+  TECH_LEAD
+  PRODUCT_MANAGER
+  BOARD_ADMIN
+  CANDIDATE // Added for new bootcamps
+}
+
+enum AssignmentType {
+  VIDEO
+  PDF
+  LINK
+  DOCUMENT
+}
+
+enum UserStatus {
+  ACTIVE
+  ALUMNI
+  ARCHIVED
+}
+
+enum GroupStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum MemberStatus {
+  ACTIVE
+  TENTATIVE
+  PENDING_APPROVAL
+}
+
+model Cohort {
+  id        String   @id @default(uuid())
+  name      String   @unique // e.g., "Fall 2025"
+  isActive  Boolean  @default(false)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+  groups    Group[]
+}
+
 model User {
-  id          String       @id @default(uuid())
-  email       String       @unique
+  id          String     @id @default(uuid())
+  email       String     @unique
   fullName    String?
-  role        Role         @default(DEVELOPER)
-  createdAt   DateTime     @default(now())
+  role        Role       @default(DEVELOPER)
+  status      UserStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now())
   completions Completion[]
   groups      UserGroup[]
 }
@@ -21,7 +64,11 @@ model Group {
   id          String            @id @default(uuid())
   name        String
   description String?
+  cohortId    String?
+  status      GroupStatus       @default(ACTIVE)
   createdAt   DateTime          @default(now())
+  
+  cohort      Cohort?           @relation(fields: [cohortId], references: [id])
   assignments AssignmentGroup[]
   members     UserGroup[]
 }
@@ -40,12 +87,13 @@ model Assignment {
 }
 
 model UserGroup {
-  id       String   @id @default(uuid())
+  id       String       @id @default(uuid())
   userId   String
   groupId  String
-  joinedAt DateTime @default(now())
-  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status   MemberStatus @default(ACTIVE)
+  joinedAt DateTime     @default(now())
+  group    Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, groupId])
 }
@@ -55,6 +103,12 @@ model AssignmentGroup {
   assignmentId String
   groupId      String
   assignedAt   DateTime   @default(now())
+  
+  // Custom overrides for this group
+  customDueDate DateTime?
+  customNote    String?
+  isVisible     Boolean    @default(true)
+
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   group        Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
@@ -70,18 +124,4 @@ model Completion {
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, assignmentId])
-}
-
-enum Role {
-  DEVELOPER
-  TECH_LEAD
-  PRODUCT_MANAGER
-  BOARD_ADMIN
-}
-
-enum AssignmentType {
-  VIDEO
-  PDF
-  LINK
-  DOCUMENT
 }

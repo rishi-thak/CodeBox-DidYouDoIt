@@ -53,7 +53,7 @@ export const createGroup = async (req: AuthRequest, res: Response): Promise<void
                return;
           }
 
-          const { name, description, members } = req.body; // members is list of emails optional
+          const { name, description, members, cohortId } = req.body; // members is list of emails optional
 
           let userIds: string[] = [];
           if (members && members.length > 0) {
@@ -68,6 +68,7 @@ export const createGroup = async (req: AuthRequest, res: Response): Promise<void
                data: {
                     name,
                     description,
+                    cohortId, // Optional
                     members: {
                          create: userIds.map(uid => ({
                               user: { connect: { id: uid } }
@@ -91,7 +92,7 @@ export const updateGroup = async (req: AuthRequest, res: Response): Promise<void
           }
 
           const { id } = req.params;
-          const { name, description, members } = req.body; // members is list of emails
+          const { name, description, members, cohortId } = req.body; // members is list of emails
 
           // Handle members update if provided
           if (members) {
@@ -122,7 +123,7 @@ export const updateGroup = async (req: AuthRequest, res: Response): Promise<void
                await prisma.$transaction(async (tx) => {
                     await tx.group.update({
                          where: { id },
-                         data: { name, description }
+                         data: { name, description, cohortId }
                     });
 
                     if (toRemove.length > 0) {
@@ -146,7 +147,7 @@ export const updateGroup = async (req: AuthRequest, res: Response): Promise<void
           } else {
                await prisma.group.update({
                     where: { id },
-                    data: { name, description }
+                    data: { name, description, cohortId }
                });
           }
 

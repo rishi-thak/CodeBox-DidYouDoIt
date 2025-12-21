@@ -42,7 +42,8 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
                return;
           }
 
-          const { fullName, email, role, groupIds } = req.body;
+
+          const { fullName, email, role, status, groupIds } = req.body;
 
           // Check if user exists
           const existing = await prisma.user.findUnique({ where: { email } });
@@ -56,6 +57,7 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
                     fullName,
                     email,
                     role: role || 'DEVELOPER', // Default
+                    status: status || 'ACTIVE',
                     // Map groupIds to connect logic
                     groups: groupIds && groupIds.length > 0 ? {
                          create: groupIds.map((gid: string) => ({
@@ -88,11 +90,11 @@ export const updateUser = async (req: AuthRequest, res: Response): Promise<void>
           }
 
           const { id } = req.params;
-          const { fullName, email, role, groupIds } = req.body;
+          const { fullName, email, role, status, groupIds } = req.body;
 
           // Transaction to handle updating groups (disconnect all, then connect new)
           // If groupIds is provided
-          let data: any = { fullName, email, role };
+          let data: any = { fullName, email, role, status };
 
           if (groupIds) {
                // This is a simple strategy: delete all existing memberships for this user, then create new ones
@@ -118,7 +120,7 @@ export const updateUser = async (req: AuthRequest, res: Response): Promise<void>
           const updatedUser = await prisma.$transaction(async (tx) => {
                const user = await tx.user.update({
                     where: { id },
-                    data: { fullName, email, role }
+                    data: { fullName, email, role, status }
                });
 
                if (groupIds) {

@@ -9,6 +9,13 @@ export const listAssignments = async (req: AuthRequest, res: Response): Promise<
      try {
           const user = req.user!;
 
+          // Status Check: Alumni/Archived users see nothing
+          // @ts-ignore - status exists in schema but client might not be generated yet
+          if (user.status === 'ALUMNI' || user.status === 'ARCHIVED') {
+               res.json([]);
+               return;
+          }
+
           if (user.role === 'BOARD_ADMIN') {
                const assignments = await prisma.assignment.findMany({
                     include: { assignedTo: { include: { group: true } } }
@@ -31,24 +38,31 @@ export const listAssignments = async (req: AuthRequest, res: Response): Promise<
           const assignments = await prisma.assignment.findMany({
                where: {
                     OR: [
-                         {
-                              assignedTo: {
-                                   some: {
-                                        groupId: { in: groupIds }
-                                   }
-                              }
-                         },
-                         {
-                              assignedTo: {
-                                   none: {}
-                              }
-                         }
+                         { assignedTo: { some: { groupId: { in: groupIds } } } },
+                         { assignedTo: { none: {} } }
                     ]
                },
                include: { assignedTo: { include: { group: true } } }
           });
 
-          res.json(assignments);
+          // Filter: If user is NOT a Candidate (and not Admin), hide assignments from Cohort Groups (Bootcamp work)
+          // valid user roles here: DEVELOPER, TECH_LEAD, PRODUCT_MANAGER
+          // if they are in a "Cohort" group (e.g. as a mentor), they shouldn't see the homework as their own task.
+          let finalAssignments = assignments;
+          if (user.role !== 'CANDIDATE') {
+               finalAssignments = assignments.filter(a => {
+                    // Check if this assignment is targeted at a Cohort Group
+                    // If ALL of its assigned groups are Cohort Groups, hide it.
+                    // If it's mixed? Hide it to be safe.
+                    // If it's Global (no groups), keep it.
+                    if (a.assignedTo.length === 0) return true;
+
+                    const isCohortAssignment = a.assignedTo.some(ag => ag.group.cohortId !== null);
+                    return !isCohortAssignment;
+               });
+          }
+
+          res.json(finalAssignments);
      } catch (error) {
           res.status(500).json({ error: 'Failed to fetch assignments' });
      }
