@@ -41,7 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
                {/* Navbar - Only show if authenticated */}
                {isAuth && (
-                    <nav className="border-b border-border/50 bg-background/50 backdrop-blur-md sticky top-0 z-50">
+                    <nav className="border-b border-border/50 bg-background sticky top-0 z-50">
                          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                               <Link to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight z-50 relative" onClick={closeMobileMenu}>
                                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
@@ -103,8 +103,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                         initial={{ opacity: 0, y: -20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -20 }}
-                                        className="fixed inset-0 bg-background/95 backdrop-blur-lg z-40 md:hidden flex flex-col pt-24 px-6 space-y-8"
+                                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] md:hidden flex flex-col pt-24 px-6 space-y-8"
                                    >
+                                        <div className="absolute top-4 right-4">
+                                             <Button variant="ghost" size="icon" onClick={closeMobileMenu}>
+                                                  <X size={24} />
+                                             </Button>
+                                        </div>
                                         <div className="flex flex-col space-y-6 text-center">
                                              <Link
                                                   to="/assignments"
