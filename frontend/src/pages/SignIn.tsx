@@ -192,7 +192,7 @@ export default function SignIn() {
                                              <Input
                                                   id="email"
                                                   type="email"
-                                                  placeholder="you@university.edu"
+                                                  placeholder="you@calpoly.edu"
                                                   value={email}
                                                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
                                                   className="pl-10 h-12 bg-background/50"
