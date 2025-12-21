@@ -212,25 +212,7 @@ export function GroupManager({ groups }: Props) {
                                    <Label htmlFor="showArchived">Show Archived</Label>
                               </div>
                          )}
-                         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
-                              <DialogTrigger asChild>
-                                   <Button className="gap-2 px-4 h-9 shadow-sm">
-                                        <Plus size={16} /> <span className="md:hidden">Group</span><span className="hidden md:inline">New Group</span>
-                                   </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-xl">
-                                   <DialogHeader>
-                                        <DialogTitle>{editingId ? 'Edit Group' : 'Create Group'}</DialogTitle>
-                                   </DialogHeader>
-                                   <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                             <Label htmlFor="name">Group Name</Label>
-                                             <Input id="name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Engineering Team" />
-                                        </div>
-                                        <div className="grid gap-2">
-                                             <Label htmlFor="desc">Description</Label>
-                                             <Textarea id="desc" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Short description..." />
-                                        </div>
+
 
                          <div className="flex items-center space-x-2 bg-muted/50 p-1.5 rounded-lg border">
                               <Switch
