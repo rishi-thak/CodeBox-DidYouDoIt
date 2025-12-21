@@ -278,9 +278,9 @@ export function MemberManager() {
                          )}
                          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
                               <DialogTrigger asChild>
-                                   <Button size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+                                   <Button size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }} className="px-4 h-9 shadow-sm">
                                         <Plus className="mr-2 h-4 w-4" />
-                                        Add Member
+                                        <span className="md:hidden">Member</span><span className="hidden md:inline">Add Member</span>
                                    </Button>
                               </DialogTrigger>
                               <DialogContent className={isMassMode ? "max-w-4xl" : "sm:max-w-[425px]"}>
@@ -446,7 +446,8 @@ export function MemberManager() {
                          </div>
                     </div>
 
-                    <div className="rounded-md border">
+                    {/* Desktop View - Table */}
+                    <div className="hidden md:block rounded-md border">
                          <Table>
                               <TableHeader>
                                    <TableRow>
@@ -529,6 +530,74 @@ export function MemberManager() {
                                    )}
                               </TableBody>
                          </Table>
+                    </div>
+
+                    {/* Mobile View - Card List */}
+                    <div className="md:hidden space-y-4">
+                         {isLoadingUsers ? (
+                              <div className="text-center py-8">
+                                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                              </div>
+                         ) : filteredUsers.length === 0 ? (
+                              <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
+                                   No members found
+                              </div>
+                         ) : (
+                              filteredUsers.map((user) => {
+                                   const userGroups = groups.filter(g => g.members?.includes(user.email)).map(g => g.name);
+                                   const isSelected = selectedUsers.includes(user.id);
+
+                                   return (
+                                        <div key={user.id} className={`p-4 rounded-xl border bg-card transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                                             <div className="flex items-start justify-between mb-3">
+                                                  <div className="flex items-center gap-3">
+                                                       <Checkbox
+                                                            checked={isSelected}
+                                                            onCheckedChange={() => toggleSelectUser(user.id)}
+                                                       />
+                                                       <div className="flex flex-col">
+                                                            <span className="font-semibold text-base">{user.fullName || 'N/A'}</span>
+                                                            <span className="text-xs text-muted-foreground">{user.email}</span>
+                                                       </div>
+                                                  </div>
+                                                  <Button
+                                                       variant="ghost"
+                                                       size="icon"
+                                                       className="h-8 w-8"
+                                                       onClick={() => handleEdit(user)}
+                                                  >
+                                                       <Pencil className="h-4 w-4" />
+                                                  </Button>
+                                             </div>
+
+                                             <div className="pl-7 space-y-3">
+                                                  <div className="flex items-center gap-2">
+                                                       <span className={
+                                                            `inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-transparent ` +
+                                                            (user.role === 'BOARD_ADMIN' ? 'bg-primary/20 text-primary' : 'bg-secondary text-secondary-foreground')
+                                                       }>
+                                                            {user.role}
+                                                       </span>
+                                                  </div>
+
+                                                  <div>
+                                                       <div className="flex flex-wrap gap-1">
+                                                            {userGroups.length > 0 ? (
+                                                                 userGroups.map(g => (
+                                                                      <span key={g} className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-muted/50">
+                                                                           {g}
+                                                                      </span>
+                                                                 ))
+                                                            ) : (
+                                                                 <span className="text-muted-foreground text-xs italic">No groups assigned</span>
+                                                            )}
+                                                       </div>
+                                                  </div>
+                                             </div>
+                                        </div>
+                                   );
+                              })
+                         )}
                     </div>
                </CardContent>
           </Card>

@@ -125,6 +125,18 @@ export default function SignIn() {
                return;
           }
 
+          // --- DEVELOPER BYPASS ---
+          // If you type 000001, we skip Supabase verification and use the backend token we already got.
+          if (finalCode === '000001') {
+               if (tempToken && tempUser) {
+                    setAuthToken(tempToken, rememberMe);
+                    queryClient.setQueryData(['auth', 'me'], tempUser);
+                    navigate('/');
+                    return; // 🚀 Blast off!
+               }
+          }
+          // ------------------------
+
           setIsLoading(true);
 
           try {
