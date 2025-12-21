@@ -278,9 +278,9 @@ export function MemberManager() {
                          )}
                          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
                               <DialogTrigger asChild>
-                                   <Button size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+                                   <Button size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }} className="px-4 h-9 shadow-sm">
                                         <Plus className="mr-2 h-4 w-4" />
-                                        Add Member
+                                        <span className="md:hidden">Member</span><span className="hidden md:inline">Add Member</span>
                                    </Button>
                               </DialogTrigger>
                               <DialogContent className={isMassMode ? "max-w-4xl" : "sm:max-w-[425px]"}>
@@ -581,7 +581,6 @@ export function MemberManager() {
                                                   </div>
 
                                                   <div>
-                                                       <span className="text-xs text-muted-foreground block mb-1">Groups</span>
                                                        <div className="flex flex-wrap gap-1">
                                                             {userGroups.length > 0 ? (
                                                                  userGroups.map(g => (

@@ -156,8 +156,8 @@ export function GroupManager({ groups }: Props) {
                          )}
                          <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
                               <DialogTrigger asChild>
-                                   <Button className="gap-2">
-                                        <Plus size={16} /> New Group
+                                   <Button className="gap-2 px-4 h-9 shadow-sm">
+                                        <Plus size={16} /> <span className="md:hidden">Group</span><span className="hidden md:inline">New Group</span>
                                    </Button>
                               </DialogTrigger>
                               <DialogContent className="max-w-xl">
@@ -324,12 +324,14 @@ export function GroupManager({ groups }: Props) {
                                         </div>
                                    </div>
 
-                                   <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                                        {group.description || <span className="italic">No description provided</span>}
-                                   </p>
+                                   {group.description && (
+                                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                                             {group.description}
+                                        </p>
+                                   )}
 
                                    <div>
-                                        <span className="text-xs text-muted-foreground block mb-1">Members Preview</span>
+                                        <span className="text-xs text-muted-foreground block mb-1">Members: </span>
                                         <div className="flex flex-wrap gap-1">
                                              {group.members.length > 0 ? (
                                                   <>

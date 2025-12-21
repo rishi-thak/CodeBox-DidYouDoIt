@@ -199,8 +199,8 @@ export function AssignmentManager({ assignments, groups, isLoading }: Props) {
                          <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
                               <DialogTrigger asChild>
                                    <span tabIndex={0} className={!canCreate ? "cursor-not-allowed" : ""}>
-                                        <Button className="gap-2" disabled={!canCreate}>
-                                             <Plus size={16} /> New Assignment
+                                        <Button className="gap-2 px-4 h-9 shadow-sm" disabled={!canCreate}>
+                                             <Plus size={16} /> <span className="md:hidden">Assignment</span><span className="hidden md:inline">New Assignment</span>
                                         </Button>
                                    </span>
                               </DialogTrigger>
@@ -273,7 +273,7 @@ export function AssignmentManager({ assignments, groups, isLoading }: Props) {
                     </div>
                </div>
 
-               <div className="rounded-md border">
+               <div className="hidden md:block rounded-md border">
                     <Table>
                          <TableHeader>
                               <TableRow>
@@ -363,6 +363,82 @@ export function AssignmentManager({ assignments, groups, isLoading }: Props) {
                               )}
                          </TableBody>
                     </Table>
+               </div>
+
+               {/* Mobile View - Cards */}
+               <div className="md:hidden space-y-4">
+                    {isLoading ? (
+                         <div className="text-center py-10">
+                              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                         </div>
+                    ) : filteredAssignments.length === 0 ? (
+                         <div className="text-center py-10 text-muted-foreground border border-dashed rounded-xl bg-muted/10">
+                              No assignments found.
+                         </div>
+                    ) : (
+                         filteredAssignments.map(assignment => {
+                              const isSelected = selectedAssignments.includes(assignment.id);
+                              return (
+                                   <div key={assignment.id} className={`p-4 rounded-xl border bg-card transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                                        <div className="flex items-start justify-between mb-3">
+                                             <div className="flex items-center gap-3">
+                                                  <Checkbox
+                                                       checked={isSelected}
+                                                       onCheckedChange={() => toggleSelectAssignment(assignment.id)}
+                                                  />
+                                                  <div className="flex flex-col overflow-hidden">
+                                                       <h3 className="font-semibold text-base truncate">{assignment.title}</h3>
+                                                       <div className="flex items-center gap-2 mt-1">
+                                                            <Badge variant="secondary" className="gap-1 px-1.5 h-5 text-[10px]">
+                                                                 {assignment.type === 'VIDEO' && <Play size={8} />}
+                                                                 {assignment.type === 'PDF' && <FileText size={8} />}
+                                                                 {assignment.type === 'LINK' && <LinkIcon size={8} />}
+                                                                 {assignment.type === 'DOCUMENT' && <FileText size={8} />}
+                                                                 {assignment.type}
+                                                            </Badge>
+                                                            {assignment.dueDate && (
+                                                                 <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                                      due {new Date(assignment.dueDate).toLocaleDateString()}
+                                                                 </span>
+                                                            )}
+                                                       </div>
+                                                  </div>
+                                             </div>
+                                             <div className="flex gap-1 ml-2 shrink-0">
+                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(assignment)}>
+                                                       <Pencil size={16} className="text-blue-500" />
+                                                  </Button>
+                                                  {(isBoardAdmin || (assignment.groupIds && assignment.groupIds.some(gid => allowedGroups.some(g => g.id === gid)))) && (
+                                                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setStatsId(assignment.id)}>
+                                                            <BarChart3 size={16} className="text-purple-500" />
+                                                       </Button>
+                                                  )}
+                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { if (window.confirm('Delete?')) deleteMutation.mutate(assignment.id) }}>
+                                                       <Trash2 size={16} className="text-destructive" />
+                                                  </Button>
+                                             </div>
+                                        </div>
+
+                                        <div className="text-sm text-muted-foreground mb-3 break-all line-clamp-1">
+                                             {assignment.contentUrl}
+                                        </div>
+
+                                        <div>
+                                             <div className="flex flex-wrap gap-1">
+                                                  {assignment.groupIds && assignment.groupIds.length > 0 ? (
+                                                       assignment.groupIds.map(gid => {
+                                                            const g = groups.find(x => x.id === gid);
+                                                            return g ? <Badge key={gid} variant="outline" className="text-[10px] font-normal">{g.name}</Badge> : null;
+                                                       })
+                                                  ) : (
+                                                       <Badge variant="outline" className="text-[10px] text-muted-foreground">Everyone</Badge>
+                                                  )}
+                                             </div>
+                                        </div>
+                                   </div>
+                              )
+                         })
+                    )}
                </div>
 
                <StatsDialog
