@@ -29,10 +29,21 @@ import {
      SelectValue,
 } from '../ui/select';
 import { Label } from '../ui/label';
-import { Search, Loader2, Plus, Trash2, Pencil, X } from 'lucide-react';
+import { Search, Loader2, Plus, Trash2, Pencil, X, ChevronDown, Filter } from 'lucide-react';
 import { useToast } from '../ui/use-toast';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../hooks/useAuth';
+import { Switch } from '../ui/switch';
+import {
+     DropdownMenu,
+     DropdownMenuContent,
+     DropdownMenuItem,
+     DropdownMenuLabel,
+     DropdownMenuSeparator,
+     DropdownMenuTrigger,
+     DropdownMenuRadioGroup,
+     DropdownMenuRadioItem,
+} from "../ui/dropdown-menu";
 
 export function MemberManager() {
      const { toast } = useToast();
@@ -41,6 +52,7 @@ export function MemberManager() {
 
      // State
      const [search, setSearch] = useState('');
+     const [isDetailedView, setIsDetailedView] = useState(false);
      const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
      const [isDialogOpen, setIsDialogOpen] = useState(false);
      const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -49,11 +61,16 @@ export function MemberManager() {
      const [isMassMode, setIsMassMode] = useState(false);
      const [massFormData, setMassFormData] = useState<Array<{ fullName: string, email: string, role: string, groupIds: string[] }>>([]);
 
+     // Filter State
+     const [statusFilter, setStatusFilter] = useState('ACTIVE');
+     const [roleFilter, setRoleFilter] = useState('ALL');
+
      // Form State (for both add and edit)
      const initialFormState = {
           fullName: '',
           email: '',
           role: 'DEVELOPER',
+          status: 'ACTIVE',
           groupIds: [] as string[]
      };
      const [formData, setFormData] = useState(initialFormState);
@@ -123,6 +140,7 @@ export function MemberManager() {
                fullName: user.fullName,
                email: user.email,
                role: user.role,
+               status: user.status || 'ACTIVE',
                groupIds: userGroupIds
           });
           setIsDialogOpen(true);
@@ -171,6 +189,7 @@ export function MemberManager() {
                     fullName: formData.fullName,
                     email: formData.email,
                     role: formData.role,
+                    status: formData.status,
                     groupIds: formData.groupIds
                };
                updateMutation.mutate({ id: editingUser.id, data: payload });
@@ -214,6 +233,7 @@ export function MemberManager() {
                     fullName: formData.fullName,
                     email: formData.email,
                     role: formData.role,
+                    status: formData.status,
                     groupIds: formData.groupIds
                };
 
@@ -254,11 +274,41 @@ export function MemberManager() {
           );
      };
 
+     const handleBulkStatus = async (status: string) => {
+          if (!selectedUsers.length) return;
+          try {
+               await Promise.all(selectedUsers.map(id => api.users.update(id, { status })));
+               queryClient.invalidateQueries({ queryKey: ['users'] });
+               toast({ title: "Success", description: `Updated ${selectedUsers.length} users to ${status}` });
+               setSelectedUsers([]);
+          } catch (error) {
+               toast({ title: "Error", description: "Failed to update users", variant: "destructive" });
+          }
+     };
+
+     const handleBulkRole = async (role: string) => {
+          if (!selectedUsers.length) return;
+          try {
+               await Promise.all(selectedUsers.map(id => api.users.update(id, { role })));
+               queryClient.invalidateQueries({ queryKey: ['users'] });
+               toast({ title: "Success", description: `Updated ${selectedUsers.length} users to ${role}` });
+               setSelectedUsers([]);
+          } catch (error) {
+               toast({ title: "Error", description: "Failed to update users", variant: "destructive" });
+          }
+     };
+
      // Filter Logic
-     const filteredUsers = React.useMemo(() => users.filter(user =>
-          (user.fullName?.toLowerCase() || '').includes(search.toLowerCase()) ||
-          (user.email?.toLowerCase() || '').includes(search.toLowerCase())
-     ), [users, search]);
+     const filteredUsers = React.useMemo(() => users.filter(user => {
+          const matchesSearch = (user.fullName?.toLowerCase() || '').includes(search.toLowerCase()) ||
+               (user.email?.toLowerCase() || '').includes(search.toLowerCase());
+
+          const userStatus = user.status || 'ACTIVE';
+          const matchesStatus = statusFilter === 'ALL' ? true : userStatus === statusFilter;
+          const matchesRole = roleFilter === 'ALL' ? true : user.role === roleFilter;
+
+          return matchesSearch && matchesStatus && matchesRole;
+     }), [users, search, statusFilter, roleFilter]);
 
      const isAllSelected = filteredUsers.length > 0 && selectedUsers.length === filteredUsers.length;
 
@@ -269,12 +319,91 @@ export function MemberManager() {
                          <CardTitle>Member Management</CardTitle>
                          <CardDescription>Manage your team members and their permissions.</CardDescription>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-2 items-center">
+                         <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                   <Button variant="outline" size="sm" className="gap-2">
+                                        <Filter size={16} />
+                                        Filter
+                                        {(statusFilter !== 'ACTIVE' || roleFilter !== 'ALL') && (
+                                             <span className="flex h-2 w-2 rounded-full bg-primary" />
+                                        )}
+                                   </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                   <DropdownMenuLabel>Filter Status</DropdownMenuLabel>
+                                   <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                                        <DropdownMenuRadioItem value="ALL">All Statuses</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="ACTIVE">Active</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="ALUMNI">Alumni</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="ARCHIVED">Archived</DropdownMenuRadioItem>
+                                   </DropdownMenuRadioGroup>
+                                   <DropdownMenuSeparator />
+                                   <DropdownMenuLabel>Filter Role</DropdownMenuLabel>
+                                   <DropdownMenuRadioGroup value={roleFilter} onValueChange={setRoleFilter}>
+                                        <DropdownMenuRadioItem value="ALL">All Roles</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="CANDIDATE">Candidate</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="DEVELOPER">Developer</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="TECH_LEAD">Tech Lead</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="PRODUCT_MANAGER">Product Manager</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="BOARD_ADMIN">Board Admin</DropdownMenuRadioItem>
+                                   </DropdownMenuRadioGroup>
+                                   {(statusFilter !== 'ACTIVE' || roleFilter !== 'ALL') && (
+                                        <>
+                                             <DropdownMenuSeparator />
+                                             <DropdownMenuItem
+                                                  className="justify-center text-center text-sm font-medium text-muted-foreground"
+                                                  onClick={() => { setStatusFilter('ACTIVE'); setRoleFilter('ALL'); }}
+                                             >
+                                                  Reset Filters
+                                             </DropdownMenuItem>
+                                        </>
+                                   )}
+                              </DropdownMenuContent>
+                         </DropdownMenu>
+                         <div className="flex items-center space-x-2 mr-2 bg-muted/50 p-1.5 rounded-lg border">
+                              <Switch
+                                   checked={isDetailedView}
+                                   onCheckedChange={setIsDetailedView}
+                                   id="detailed-view"
+                              />
+                              <Label htmlFor="detailed-view" className="text-sm font-medium cursor-pointer">
+                                   Detailed View
+                              </Label>
+                         </div>
+
                          {selectedUsers.length > 0 && (
-                              <Button variant="destructive" size="sm" onClick={handleDeleteSelected}>
-                                   <Trash2 className="mr-2 h-4 w-4" />
-                                   Delete ({selectedUsers.length})
-                              </Button>
+                              <>
+                                   {isDetailedView ? (
+                                        <DropdownMenu>
+                                             <DropdownMenuTrigger asChild>
+                                                  <Button variant="outline" size="sm">
+                                                       Bulk Actions ({selectedUsers.length}) <ChevronDown className="ml-2 h-4 w-4" />
+                                                  </Button>
+                                             </DropdownMenuTrigger>
+                                             <DropdownMenuContent align="end">
+                                                  <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                                                  <DropdownMenuSeparator />
+                                                  <DropdownMenuItem onClick={() => handleBulkStatus('ACTIVE')}>Make Active</DropdownMenuItem>
+                                                  <DropdownMenuItem onClick={() => handleBulkStatus('ALUMNI')}>Make Alumni</DropdownMenuItem>
+                                                  <DropdownMenuItem onClick={() => handleBulkStatus('ARCHIVED')}>Archive</DropdownMenuItem>
+                                                  <DropdownMenuSeparator />
+                                                  <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                                                  <DropdownMenuItem onClick={() => handleBulkRole('CANDIDATE')}>Set as Candidate</DropdownMenuItem>
+                                                  <DropdownMenuItem onClick={() => handleBulkRole('DEVELOPER')}>Set as Developer</DropdownMenuItem>
+                                                  <DropdownMenuSeparator />
+                                                  <DropdownMenuItem onClick={handleDeleteSelected} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                       <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
+                                                  </DropdownMenuItem>
+                                             </DropdownMenuContent>
+                                        </DropdownMenu>
+                                   ) : (
+                                        <Button variant="destructive" size="sm" onClick={handleDeleteSelected}>
+                                             <Trash2 className="mr-2 h-4 w-4" />
+                                             Delete ({selectedUsers.length})
+                                        </Button>
+                                   )}
+                              </>
                          )}
                          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
                               <DialogTrigger asChild>
@@ -313,19 +442,35 @@ export function MemberManager() {
                                                        placeholder="john@example.com"
                                                   />
                                              </div>
-                                             <div className="grid gap-2">
-                                                  <Label htmlFor="role">Role</Label>
-                                                  <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
-                                                       <SelectTrigger>
-                                                            <SelectValue placeholder="Select a role" />
-                                                       </SelectTrigger>
-                                                       <SelectContent>
-                                                            <SelectItem value="DEVELOPER">Developer</SelectItem>
-                                                            <SelectItem value="TECH_LEAD">Tech Lead</SelectItem>
-                                                            <SelectItem value="PRODUCT_MANAGER">Product Manager</SelectItem>
-                                                            <SelectItem value="BOARD_ADMIN">Board Admin</SelectItem>
-                                                       </SelectContent>
-                                                  </Select>
+                                             <div className="grid grid-cols-2 gap-4">
+                                                  <div className="grid gap-2">
+                                                       <Label htmlFor="role">Role</Label>
+                                                       <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
+                                                            <SelectTrigger>
+                                                                 <SelectValue placeholder="Select a role" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                 <SelectItem value="CANDIDATE">Bootcamp Candidate</SelectItem>
+                                                                 <SelectItem value="DEVELOPER">Developer</SelectItem>
+                                                                 <SelectItem value="TECH_LEAD">Tech Lead</SelectItem>
+                                                                 <SelectItem value="PRODUCT_MANAGER">Product Manager</SelectItem>
+                                                                 <SelectItem value="BOARD_ADMIN">Board Admin</SelectItem>
+                                                            </SelectContent>
+                                                       </Select>
+                                                  </div>
+                                                  <div className="grid gap-2">
+                                                       <Label htmlFor="status">Status</Label>
+                                                       <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
+                                                            <SelectTrigger>
+                                                                 <SelectValue placeholder="Status" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                 <SelectItem value="ACTIVE">Active</SelectItem>
+                                                                 <SelectItem value="ALUMNI">Alumni</SelectItem>
+                                                                 <SelectItem value="ARCHIVED">Archived</SelectItem>
+                                                            </SelectContent>
+                                                       </Select>
+                                                  </div>
                                              </div>
                                              <div className="grid gap-2">
                                                   <Label>Assign Groups</Label>
@@ -359,9 +504,6 @@ export function MemberManager() {
                                                   <div className="col-span-3">Full Name</div>
                                                   <div className="col-span-4">Email</div>
                                                   <div className="col-span-3">Role</div>
-                                                  {/* Groups suppressed in horizontal view for simplicity, OR we can add multi-select popover later. For now, let's assume default NO groups or we add a simple count */}
-                                                  {/* Actually, user didn't explicitly ask for groups column, but it's part of member data. */}
-                                                  {/* Let's skip groups in mass mode for MVP horizontal layout to fit inputs */}
                                                   <div className="col-span-2"></div>
                                              </div>
                                              {massFormData.map((row, index) => (
@@ -390,6 +532,7 @@ export function MemberManager() {
                                                                       <SelectItem value="TECH_LEAD">Tech Lead</SelectItem>
                                                                       <SelectItem value="PRODUCT_MANAGER">Product Manager</SelectItem>
                                                                       <SelectItem value="BOARD_ADMIN">Board Admin</SelectItem>
+                                                                      <SelectItem value="CANDIDATE">Candidate</SelectItem>
                                                                  </SelectContent>
                                                             </Select>
                                                        </div>
@@ -460,6 +603,7 @@ export function MemberManager() {
                                         <TableHead>Name</TableHead>
                                         <TableHead>Email</TableHead>
                                         <TableHead>Role</TableHead>
+                                        {isDetailedView && <TableHead>Status</TableHead>}
                                         <TableHead>Groups</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                    </TableRow>
@@ -499,6 +643,16 @@ export function MemberManager() {
                                                                  {user.role}
                                                             </span>
                                                        </TableCell>
+                                                       {isDetailedView && (
+                                                            <TableCell>
+                                                                 <span className={
+                                                                      `inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ` +
+                                                                      (user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800')
+                                                                 }>
+                                                                      {user.status || 'ACTIVE'}
+                                                                 </span>
+                                                            </TableCell>
+                                                       )}
                                                        <TableCell>
                                                             <div className="flex flex-wrap gap-1">
                                                                  {userGroups.length > 0 ? (

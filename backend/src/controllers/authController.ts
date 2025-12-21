@@ -14,7 +14,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
      try {
           // Check if user exists
-          let user = await prisma.user.findUnique({ where: { email } });
+          let user = await prisma.user.findFirst({
+               where: {
+                    email: {
+                         equals: email,
+                         mode: 'insensitive'
+                    }
+               }
+          });
 
           if (!user) {
                res.status(401).json({ error: "It doesn't look like you're in our system" });

@@ -5,7 +5,8 @@ export interface User {
      id: string;
      email: string;
      fullName: string;
-     role: 'DEVELOPER' | 'TECH_LEAD' | 'PRODUCT_MANAGER' | 'BOARD_ADMIN'; // Updated roles
+     role: 'DEVELOPER' | 'TECH_LEAD' | 'PRODUCT_MANAGER' | 'BOARD_ADMIN' | 'CANDIDATE'; // Updated roles
+     status: 'ACTIVE' | 'ALUMNI' | 'ARCHIVED';
      createdAt: string;
 }
 
@@ -13,6 +14,8 @@ export interface Group {
      id: string;
      name: string;
      description: string;
+     status: 'ACTIVE' | 'ARCHIVED';
+     cohortId?: string;
      createdAt: string;
      members: string[]; // emails
      _count?: { members: number };
@@ -29,6 +32,20 @@ export interface Assignment {
      assignedTo?: { groupId: string }[]; // Backend relation structure
      dueDate?: string;
      createdAt: string;
+}
+
+export interface Cohort {
+     id: string;
+     name: string;
+     isActive: boolean;
+     startDate?: string;
+     endDate?: string;
+}
+
+export enum UserStatus {
+     ACTIVE = 'ACTIVE',
+     ALUMNI = 'ALUMNI',
+     ARCHIVED = 'ARCHIVED'
 }
 
 export interface Completion {
@@ -192,6 +209,42 @@ export const api = {
                     headers: getHeaders()
                });
                if (!res.ok) throw new Error('Failed to delete group');
+               return await res.json();
+          }
+     },
+     cohorts: {
+          list: async (token?: string) => {
+               const res = await fetch(`${API_URL}/cohorts`, { headers: getHeaders(token) });
+               if (!res.ok) throw new Error('Failed to fetch cohorts');
+               return await res.json() as Cohort[];
+          },
+          create: async (data: any) => { // Assuming data is Partial<Cohort>
+               const res = await fetch(`${API_URL}/cohorts`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+               });
+               if (!res.ok) throw new Error('Failed to create cohort');
+               return await res.json() as Cohort;
+          },
+          update: async (id: string, data: any) => {
+               const res = await fetch(`${API_URL}/cohorts/${id}`, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+               });
+               if (!res.ok) throw new Error('Failed to update cohort');
+               return await res.json() as Cohort;
+          },
+          delete: async (id: string) => {
+               const res = await fetch(`${API_URL}/cohorts/${id}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+               });
+               if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || 'Failed to delete cohort');
+               }
                return await res.json();
           }
      },

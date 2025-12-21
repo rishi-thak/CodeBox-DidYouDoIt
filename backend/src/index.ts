@@ -5,6 +5,7 @@ import assignmentRoutes from './routes/assignments';
 import groupRoutes from './routes/groups';
 import userRoutes from './routes/users';
 import completionRoutes from './routes/completions';
+import cohortRoutes from './routes/cohorts';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/assignments', assignmentRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/completions', completionRoutes);
+app.use('/api/cohorts', cohortRoutes);
 
 app.get('/', (req, res) => {
      res.send('API is running');
