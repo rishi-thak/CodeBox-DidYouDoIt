@@ -255,8 +255,8 @@ export function GroupManager({ groups }: Props) {
 
                               <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
                                    <DialogTrigger asChild>
-                                        <Button className="gap-2">
-                                             <Plus size={16} /> New Group
+                                        <Button className="gap-2 px-4 h-9 shadow-sm">
+                                             <Plus size={16} /> <span className="md:hidden">Group</span><span className="hidden md:inline">New Group</span>
                                         </Button>
                                    </DialogTrigger>
                                    <DialogContent className="max-w-xl">
@@ -353,7 +353,7 @@ export function GroupManager({ groups }: Props) {
                     </div>
                </div>
 
-               <div className="rounded-md border">
+               <div className="hidden md:block rounded-md border">
                     <Table>
                          <TableHeader>
                               <TableRow>
@@ -466,6 +466,68 @@ export function GroupManager({ groups }: Props) {
                          </TableBody>
                     </Table>
                </div>
-          </div >
+
+               {/* Mobile View - Cards */}
+               <div className="md:hidden space-y-4">
+                    {filteredGroups.map(group => {
+                         const isSelected = selectedGroups.includes(group.id);
+                         return (
+                              <div key={group.id} className={`p-4 rounded-xl border bg-card transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                                   <div className="flex items-start justify-between mb-3">
+                                        <div className="flex items-center gap-3">
+                                             <Checkbox
+                                                  checked={isSelected}
+                                                  onCheckedChange={() => toggleSelectGroup(group.id)}
+                                             />
+                                             <div>
+                                                  <h3 className="font-semibold text-base">{group.name}</h3>
+                                                  <Badge variant="secondary" className="text-[10px] px-1.5 h-5">{group.members.length} Members</Badge>
+                                             </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(group)}>
+                                                  <Pencil size={16} className="text-blue-500" />
+                                             </Button>
+                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { if (window.confirm('Delete group?')) deleteMutation.mutate(group.id) }}>
+                                                  <Trash2 size={16} className="text-destructive" />
+                                             </Button>
+                                        </div>
+                                   </div>
+
+                                   {group.description && (
+                                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                                             {group.description}
+                                        </p>
+                                   )}
+
+                                   <div>
+                                        <span className="text-xs text-muted-foreground block mb-1">Members: </span>
+                                        <div className="flex flex-wrap gap-1">
+                                             {group.members.length > 0 ? (
+                                                  <>
+                                                       {group.members.slice(0, 3).map(m => (
+                                                            <Badge key={m} variant="outline" className="text-[10px] font-normal bg-muted/50 border-border/50">
+                                                                 {m.split('@')[0]}
+                                                            </Badge>
+                                                       ))}
+                                                       {group.members.length > 3 && (
+                                                            <Badge variant="outline" className="text-[10px] text-muted-foreground">+{group.members.length - 3}</Badge>
+                                                       )}
+                                                  </>
+                                             ) : (
+                                                  <span className="text-xs text-muted-foreground italic">No members yet.</span>
+                                             )}
+                                        </div>
+                                   </div>
+                              </div>
+                         )
+                    })}
+                    {filteredGroups.length === 0 && (
+                         <div className="text-center py-10 text-muted-foreground border border-dashed rounded-xl bg-muted/10">
+                              No groups found.
+                         </div>
+                    )}
+               </div>
+          </div>
      );
 }
